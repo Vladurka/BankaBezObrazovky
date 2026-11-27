@@ -1,10 +1,23 @@
 // Klient pro FastAPI backend. Když backend neodpovídá, volající použije fallback.ts.
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const KLIC_URL = 'banka.apiUrl';
 /** Verze protokolu; musí odpovídat VERZE_PROTOKOLU v backend/main.py. */
 export const VERZE_PROTOKOLU = 2;
-let apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.1.10:8000';
+
+/**
+ * Adresa backendu bez ručního zadávání:
+ * 1. EXPO_PUBLIC_API_URL z mobile/.env (např. backend na Renderu),
+ * 2. jinak stejný počítač, ze kterého Expo načetlo aplikaci, port 8000.
+ */
+function automatickaUrl(): string {
+  const zEnv = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (zEnv) return zEnv.replace(/\/+$/, '');
+  const hostUri = Constants.expoConfig?.hostUri; // např. "172.20.10.10:8081"
+  const host = hostUri?.split(':')[0];
+  return host ? `http://${host}:8000` : 'http://localhost:8000';
+}
+
+let apiUrl = automatickaUrl();
 
 export type Akce = { typ: string; [klic: string]: any };
 export type Pending = { pending_id: string; druh: string; prijemce?: string; castka?: number; lhuta_24h?: boolean };
@@ -23,23 +36,10 @@ export type Ucet = {
   upozorneni: Akce[];
 };
 
-export async function nactiUlozenouUrl(): Promise<string> {
-  try {
-    const ulozena = await AsyncStorage.getItem(KLIC_URL);
-    if (ulozena) apiUrl = ulozena;
-  } catch {
-    // úložiště není k dispozici, zůstává výchozí adresa
-  }
-  return apiUrl;
-}
-
-export async function nastavUrl(url: string): Promise<void> {
-  apiUrl = url.trim().replace(/\/+$/, '');
-  try {
-    await AsyncStorage.setItem(KLIC_URL, apiUrl);
-  } catch {
-    // není kritické
-  }
+/** Ruční změna adresy platí jen do restartu aplikace (stará uložená IP by po změně sítě překážela). */
+export function nastavUrl(url: string): void {
+  const upravena = url.trim().replace(/\/+$/, '');
+  if (upravena) apiUrl = upravena;
 }
 
 export const aktualniUrl = () => apiUrl;

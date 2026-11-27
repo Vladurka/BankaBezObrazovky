@@ -11,7 +11,7 @@ import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
-import { aktualniUrl, api, nactiUlozenouUrl, nastavUrl } from './src/api';
+import { aktualniUrl, api, nastavUrl } from './src/api';
 import { IkonaAsistent, IkonaPulse, IkonaUcet, IkonaZatres, IlustraceSpendlik, IlustraceZarovka } from './src/ikony';
 import { Cip, GradientKarta, Stitek, Tecky, Tlacitko } from './src/komponenty';
 import { AppProvider, useApp, type Zalozka } from './src/kontext';
@@ -71,13 +71,9 @@ function Prihlaseni({ vyber }: { vyber: (id: string, online: boolean) => void })
   const karusel = useRef<ScrollViewInstance>(null);
   const stranka = useRef<ScrollViewInstance>(null);
 
-  useEffect(() => {
-    nactiUlozenouUrl().then(setUrl);
-  }, []);
-
   const prihlas = async (id: string) => {
     setOveruji(true);
-    await nastavUrl(url);
+    nastavUrl(url);
     let jeOnline = false;
     try {
       jeOnline = (await api.zdravi()).stav === 'ok';
@@ -139,7 +135,7 @@ function Prihlaseni({ vyber }: { vyber: (id: string, online: boolean) => void })
 
       <Pressable onPress={() => setNastaveni((n) => !n)}>
         <Text style={s.upozorneni}>
-          Všechna data jsou ilustrační a jména fiktivní. Klepněte sem pro nastavení serveru.
+          Všechna data jsou ilustrační a jména fiktivní. Server se nastaví sám, změnit ho můžete klepnutím sem.
         </Text>
       </Pressable>
       {nastaveni && (

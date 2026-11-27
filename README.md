@@ -38,13 +38,17 @@ Poznámky:
 ```powershell
 cd mobile
 npm install
-npx expo start
+npm run demo
 ```
 
-1. Oba telefony a počítač ve stejné Wi-Fi.
+`npm run demo` sám zjistí IP počítače a spustí Expo (bez nutnosti přihlášení do Expo Go).
+
+1. Oba telefony a počítač ve stejné síti (Wi-Fi nebo hotspot telefonu).
 2. Naskenovat QR kód v Expo Go.
-3. Na úvodní obrazovce zadat adresu backendu (`http://<IP počítače>:8000`) a vybrat účet:
-   telefon 1 = **Jana** (babička), telefon 2 = **Tomáš** (vnuk a zároveň Strážce babičky).
+3. Vybrat účet: telefon 1 = **Jana** (babička), telefon 2 = **Tomáš** (vnuk a zároveň Strážce babičky).
+
+Adresu backendu aplikace odvodí sama (stejný počítač, port 8000). Pro backend na Renderu stačí
+jednou vytvořit `mobile/.env` podle `mobile/.env.example`.
 
 Když backend není dostupný, aplikace jede v režimu bez sítě (`src/fallback.ts`).
 
