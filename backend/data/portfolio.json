@@ -1,0 +1,20 @@
+{
+  "jana": {
+    "celkem": 420000,
+    "zeme": {"USA": 34, "Německo": 18, "Česko": 14, "Japonsko": 10, "Tchaj-wan": 8, "Indie": 6, "Brazílie": 5, "Hotovost": 5},
+    "odvetvi": {"Technologie": 28, "Zdravotnictví": 18, "Energetika": 14, "Finance": 16, "Spotřební zboží": 12, "Průmysl": 7, "Hotovost": 5},
+    "pravidla": [
+      "Když vypukne ozbrojený konflikt v regionu, přesuň z něj investice do bezpečnějších regionů.",
+      "Neinvestuj do zbraní a tabáku.",
+      "Při propadu trhů nic neprodávej automaticky, jen mě uklidni a ukaž souvislosti."
+    ]
+  },
+  "tomas": {
+    "celkem": 38000,
+    "zeme": {"USA": 55, "Evropa": 25, "Rozvíjející se trhy": 15, "Hotovost": 5},
+    "odvetvi": {"Technologie": 40, "Obnovitelná energie": 20, "Zdravotnictví": 15, "Finance": 20, "Hotovost": 5},
+    "pravidla": [
+      "Minimálně 20 % v obnovitelné energii."
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+# Pevné verze závislostí backendu (instalace: pip install -r requirements.txt)
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
+websockets==17.4
+pydantic==2.14.4
+openai==3.60.0
+python-dotenv==1.2.4
+python-multipart==0.0.34

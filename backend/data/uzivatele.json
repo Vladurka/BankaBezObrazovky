@@ -1,0 +1,38 @@
+{
+  "jana": {
+    "id": "jana",
+    "jmeno": "Jana Dvořáková",
+    "osloveni": "paní Jano",
+    "ucet": "123456789/0800",
+    "zustatek": 48320,
+    "strazce": "tomas",
+    "kontakty": [
+      {"id": "cez", "nazev": "ČEZ Prodej", "aliasy": ["elektrina", "elektrinu", "cez", "proud"], "ucet": "1111222333/0800", "uzivatel": null},
+      {"id": "voda", "nazev": "Pražské vodovody", "aliasy": ["voda", "vodu", "vodne"], "ucet": "2222333444/0100", "uzivatel": null},
+      {"id": "tomas", "nazev": "Tomáš (vnuk)", "aliasy": ["tomas", "tomasovi", "vnuk", "vnukovi"], "ucet": "987654321/0800", "uzivatel": "tomas"}
+    ],
+    "pohyby": [
+      {"datum": "2026-11-25", "popis": "ČEZ Prodej – záloha elektřina", "castka": -1850, "prijemce": "cez"},
+      {"datum": "2026-11-20", "popis": "Důchod", "castka": 21400, "prijemce": null},
+      {"datum": "2026-11-18", "popis": "Pražské vodovody", "castka": -620, "prijemce": "voda"},
+      {"datum": "2026-10-25", "popis": "ČEZ Prodej – záloha elektřina", "castka": -1850, "prijemce": "cez"}
+    ]
+  },
+  "tomas": {
+    "id": "tomas",
+    "jmeno": "Tomáš Dvořák",
+    "osloveni": "Tomáši",
+    "ucet": "987654321/0800",
+    "zustatek": 12450,
+    "strazce": null,
+    "kontakty": [
+      {"id": "jana", "nazev": "Babička Jana", "aliasy": ["babicka", "babicce", "jana", "jane"], "ucet": "123456789/0800", "uzivatel": "jana"},
+      {"id": "kolej", "nazev": "Kolej VŠE", "aliasy": ["kolej", "koleje", "najem"], "ucet": "3333444555/0300", "uzivatel": null}
+    ],
+    "pohyby": [
+      {"datum": "2026-11-26", "popis": "Kolej VŠE – nájem", "castka": -4200, "prijemce": "kolej"},
+      {"datum": "2026-11-15", "popis": "Brigáda – výplata", "castka": 9800, "prijemce": null},
+      {"datum": "2026-11-10", "popis": "Babička Jana", "castka": 500, "prijemce": "jana"}
+    ]
+  }
+}

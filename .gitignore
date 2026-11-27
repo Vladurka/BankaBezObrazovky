@@ -1,0 +1,76 @@
+# ===== Tajnosti (klíč OpenAI apod. patří jen do .env) =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+!debug.keystore
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# ===== Node / React Native / Expo =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+*.tsbuildinfo
+
+# Nativní složky generované přes `expo prebuild` (při čistém Expo workflow se necommitují)
+/mobile/ios/
+/mobile/android/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.apk
+*.aab
+captures/
+.cxx/
+.externalNativeBuild/
+
+# iOS / Xcode
+Pods/
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ===== Python / FastAPI =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# ===== Logy =====
+logs/
+*.log
+
+# ===== IDE a systém =====
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Claude Code – lokální nastavení a instrukce =====
+.claude/settings.local.json
+CLAUDE.md
