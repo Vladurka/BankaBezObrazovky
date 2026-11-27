@@ -1,0 +1,21 @@
+# Nasazení backendu na Render (https://render.com) jako jedné trvale běžící služby.
+# Jedna instance je nutná: stav banky, páry zatřesení a WebSocket spojení se drží v paměti.
+services:
+  - type: web
+    name: banka-bez-obrazovky
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13"
+      # klíč se zadává ručně v administraci Renderu, nikdy ne do repozitáře
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: OPENAI_STT_MODEL
+        value: gpt-4o-transcribe

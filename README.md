@@ -23,6 +23,16 @@ copy ..\.env.example .env   # doplnit OPENAI_API_KEY
 Bez klíče OpenAI backend funguje dál, jen s jednoduchým rozpoznáváním záměrů a bez převodu řeči na text.
 Windows Firewall musí povolit příchozí spojení na port 8000 v privátní síti.
 
+### Backend na Renderu (nasazení)
+
+1. Na render.com: **New → Blueprint** → vybrat tento GitHub repozitář. Render načte `render.yaml`.
+2. Při vytváření doplnit `OPENAI_API_KEY` (v repozitáři není).
+3. Po nasazení má služba adresu `https://<nazev>.onrender.com`. Tu zadat v aplikaci místo IP počítače.
+
+Poznámky:
+- Běží jen jedna instance – stav banky je v paměti, restart (nebo nové nasazení) vrátí demo do výchozího stavu.
+- Bezplatná služba po ~15 min nečinnosti usne, první požadavek pak trvá desítky sekund. Před prezentací ji otevřít v prohlížeči.
+
 ### Mobil (dva telefony s Expo Go)
 
 ```powershell
