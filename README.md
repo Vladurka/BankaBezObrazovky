@@ -47,8 +47,18 @@ npm run demo
 2. Naskenovat QR kód v Expo Go.
 3. Vybrat účet: telefon 1 = **Jana** (babička), telefon 2 = **Tomáš** (vnuk a zároveň Strážce babičky).
 
-Adresu backendu aplikace odvodí sama (stejný počítač, port 8000). Pro backend na Renderu stačí
-jednou vytvořit `mobile/.env` podle `mobile/.env.example`.
+**Telefony v jiné síti než počítač** (např. mobilní data): místo `npm run demo` spustit tunel
+
+```powershell
+cd mobile
+npm run demo:tunel
+```
+
+Expo vytvoří veřejnou adresu `https://…on.expo.app`; QR kód z ní funguje z jakékoli sítě. Načítání je pomalejší
+a Expo Go může chtít přihlášení ke stejnému účtu Expo jako počítač.
+
+Backend aplikace ve výchozím stavu volá na Renderu (`https://bankabezobrazovky.onrender.com`), takže funguje
+z jakékoli sítě. Lokální backend: v `mobile/.env` nastavit `EXPO_PUBLIC_API_URL=lokalni` (viz `mobile/.env.example`).
 
 Když backend není dostupný, aplikace jede v režimu bez sítě (`src/fallback.ts`).
 

@@ -4,17 +4,23 @@ import Constants from 'expo-constants';
 /** Verze protokolu; musí odpovídat VERZE_PROTOKOLU v backend/main.py. */
 export const VERZE_PROTOKOLU = 2;
 
+/** Nasazený backend; telefon na něj dosáhne z jakékoli sítě. */
+const VYCHOZI_SERVER = 'https://bankabezobrazovky.onrender.com';
+
 /**
  * Adresa backendu bez ručního zadávání:
- * 1. EXPO_PUBLIC_API_URL z mobile/.env (např. backend na Renderu),
- * 2. jinak stejný počítač, ze kterého Expo načetlo aplikaci, port 8000.
+ * 1. EXPO_PUBLIC_API_URL z mobile/.env, je-li nastavená,
+ *    hodnota "lokalni" = backend na stejném počítači, ze kterého Expo načetlo aplikaci (port 8000),
+ * 2. jinak backend na Renderu.
  */
 function automatickaUrl(): string {
   const zEnv = process.env.EXPO_PUBLIC_API_URL?.trim();
-  if (zEnv) return zEnv.replace(/\/+$/, '');
-  const hostUri = Constants.expoConfig?.hostUri; // např. "172.20.10.10:8081"
-  const host = hostUri?.split(':')[0];
-  return host ? `http://${host}:8000` : 'http://localhost:8000';
+  if (zEnv && zEnv !== 'lokalni') return zEnv.replace(/\/+$/, '');
+  if (zEnv === 'lokalni') {
+    const host = Constants.expoConfig?.hostUri?.split(':')[0]; // např. "172.20.10.10"
+    if (host) return `http://${host}:8000`;
+  }
+  return VYCHOZI_SERVER;
 }
 
 let apiUrl = automatickaUrl();

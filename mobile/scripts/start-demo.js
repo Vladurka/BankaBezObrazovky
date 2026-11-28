@@ -21,7 +21,7 @@ const env = { ...process.env };
 if (ip) {
   env.REACT_NATIVE_PACKAGER_HOSTNAME = ip;
   console.log(`\nIP počítače: ${ip}`);
-  console.log(`Telefon musí být ve stejné síti. Lokální backend: http://${ip}:8000\n`);
+  console.log('Telefon musí být ve stejné síti (kvůli načtení aplikace). Backend: Render, z jakékoli sítě.\n');
 } else {
   console.log('\nIP adresu se nepodařilo zjistit, Expo ji vybere samo.\n');
 }
