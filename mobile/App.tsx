@@ -12,10 +12,11 @@ import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { aktualniUrl, api, nastavUrl } from './src/api';
-import { IkonaAsistent, IkonaPulse, IkonaUcet, IkonaZatres, IlustraceSpendlik, IlustraceZarovka } from './src/ikony';
+import { IkonaAsistent, IkonaPulse, IkonaSit, IkonaUcet, IkonaZatres, IlustraceSpendlik, IlustraceZarovka } from './src/ikony';
 import { Cip, GradientKarta, Stitek, Tecky, Tlacitko } from './src/komponenty';
 import { AppProvider, useApp, type Zalozka } from './src/kontext';
 import George from './src/obrazovky/George';
+import MojePenize from './src/obrazovky/MojePenize';
 import Pulse from './src/obrazovky/Pulse';
 import Ucet from './src/obrazovky/Ucet';
 import Zatres from './src/obrazovky/Zatres';
@@ -162,6 +163,7 @@ const ZALOZKY: { id: Zalozka; nazev: string; Ikona: typeof IkonaUcet }[] = [
   { id: 'ucet', nazev: 'Přehled', Ikona: IkonaUcet },
   { id: 'george', nazev: 'George', Ikona: IkonaAsistent },
   { id: 'zatres', nazev: 'Zatřes', Ikona: IkonaZatres },
+  { id: 'penize', nazev: 'Peníze', Ikona: IkonaSit },
   { id: 'pulse', nazev: 'Pulse', Ikona: IkonaPulse },
 ];
 
@@ -207,7 +209,7 @@ function Hlavni() {
       )}
 
       {/* všechny obrazovky zůstávají načtené: zatřesení funguje z každé záložky a chat se při přepnutí nemaže */}
-      {([['george', George], ['zatres', Zatres], ['pulse', Pulse], ['ucet', Ucet]] as const).map(([id, Obrazovka]) => (
+      {([['george', George], ['zatres', Zatres], ['penize', MojePenize], ['pulse', Pulse], ['ucet', Ucet]] as const).map(([id, Obrazovka]) => (
         <View key={id} style={{ flex: 1, display: zalozka === id ? 'flex' : 'none' }}>
           <Obrazovka />
         </View>
@@ -259,5 +261,5 @@ const s = StyleSheet.create({
     backgroundColor: barvy.navigace, borderWidth: 1, borderColor: barvy.okrajSilny, borderRadius: 34,
   },
   navPolozka: { flex: 1, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  navText: { color: '#fff', fontSize: 12, fontFamily: pismo.polotucne },
+  navText: { color: "#fff", fontSize: 11, fontFamily: pismo.polotucne },
 });

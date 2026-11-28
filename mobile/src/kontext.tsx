@@ -5,7 +5,7 @@ import { Akce, api, Spojeni, Ucet, VERZE_PROTOKOLU } from './api';
 import { fallbackUcet } from './fallback';
 
 type Posluchac = (zprava: Akce) => void;
-export type Zalozka = 'george' | 'zatres' | 'pulse' | 'ucet';
+export type Zalozka = 'george' | 'zatres' | 'penize' | 'pulse' | 'ucet';
 
 type AppStav = {
   uzivatel: string;

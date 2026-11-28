@@ -148,6 +148,15 @@ export function IkonaPulse({ velikost = 24, barva = '#fff' }: P) {
   );
 }
 
+export function IkonaSit({ velikost = 24, barva = '#fff' }: P) {
+  return (
+    <Svg width={velikost} height={velikost} viewBox="0 0 24 24" {...obrys(barva)}>
+      <Circle cx="12" cy="12" r="3" /><Circle cx="5" cy="6" r="2" /><Circle cx="19" cy="6" r="2" /><Circle cx="12" cy="20" r="2" />
+      <Path d="M6.5 7.5l3.5 3M17.5 7.5L14 10.5M12 15v3" />
+    </Svg>
+  );
+}
+
 export function IkonaUcet({ velikost = 24, barva = '#fff' }: P) {
   return (
     <Svg width={velikost} height={velikost} viewBox="0 0 24 24" {...obrys(barva)}>
