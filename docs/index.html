@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Interaktivní demo hlasového asistenta George: platby hlasem, ochrana před podvodem, Zatřes telefonem a Moje peníze. Ukázková data.">
+<title>George naživo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Rozvrh: tři sloupce pro projektor – scénáře | telefon | pod kapotou. Jeden tmavý svět jako aplikace. */
+:root {
+  --stage: #0E0E12;
+  --bg: #17171C;
+  --card: #26262D;
+  --card2: #2F2F37;
+  --line: rgba(255,255,255,.09);
+  --fg: #FFFFFF;
+  --muted: #B4B4BD;
+  --dim: #8E8E98;
+  --blue: #2B7DE9;
+  --blue-bubble: #2B6FD6;
+  --blue-soft: #5AA2FF;
+  --avatar: #1E2F4D;
+  --green: #5EE38A;
+  --green-bg: #0D3D1C;
+  --red: #FF7A7A;
+  --red-bg: #3A1F24;
+  --amber: #FFB547;
+  --amber-bg: #3A2E10;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--stage); color: var(--fg); font-family: var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px; overflow-x: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--blue-soft); outline-offset: 2px; }
+
+.stage { display: grid; grid-template-columns: minmax(240px, 300px) auto minmax(300px, 440px); gap: 40px; justify-content: center; align-items: center; align-content: center; min-height: calc(100dvh - 32px); }
+@media (max-width: 1100px) { .stage { grid-template-columns: 1fr; justify-items: center; } .side { width: 100%; max-width: 560px; } }
+
+/* ---- levý panel: scénáře ---- */
+.side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.brand { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.brand h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.5px; text-wrap: balance; }
+.brand p { margin: 0; color: var(--dim); font-size: 14px; line-height: 1.45; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dim); margin-top: 8px; }
+.scen { display: flex; gap: 12px; align-items: center; text-align: left; width: 100%; background: var(--card); border: 1px solid transparent; color: var(--fg); border-radius: 16px; padding: 12px 14px; }
+.scen:hover { border-color: var(--line); background: var(--card2); }
+.scen[aria-pressed="true"] { border-color: var(--blue-soft); background: #1C2A44; }
+.scen .k { flex: 0 0 26px; height: 26px; border-radius: 8px; background: var(--bg); color: var(--muted); font: 600 13px var(--mono); display: grid; place-items: center; }
+.scen .t { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.scen .s { display: block; font-size: 12.5px; color: var(--dim); font-weight: 500; margin-top: 2px; }
+.ctrls { display: flex; gap: 8px; flex-wrap: wrap; }
+.ctrl { background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; font-size: 13.5px; font-weight: 600; }
+.ctrl.on { background: var(--blue); border-color: var(--blue); }
+.keys { color: var(--dim); font-size: 12.5px; line-height: 1.6; }
+.keys kbd { font: 600 11.5px var(--mono); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--muted); }
+
+/* ---- telefon ---- */
+.phone-wrap { display: flex; justify-content: center; }
+.phone { width: 390px; height: 844px; border-radius: 54px; background: var(--bg); border: 10px solid #2A2A31; box-shadow: 0 0 0 2px #3A3A42, 0 40px 120px rgba(0,0,0,.6); position: relative; overflow: hidden; transform-origin: top center; display: flex; flex-direction: column; }
+.notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 34px; background: #000; border-radius: 20px; z-index: 5; }
+.statusbar { height: 50px; flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 0; font-size: 15px; font-weight: 600; }
+.statusbar .ic { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.head { padding: 6px 20px 10px; flex: 0 0 auto; }
+.head h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.6px; }
+.head .st { color: var(--dim); font-size: 12.5px; font-weight: 500; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.cipy { flex: 0 0 auto; display: flex; gap: 8px; overflow-x: auto; padding: 2px 14px 10px; scrollbar-width: none; }
+.cipy::-webkit-scrollbar { display: none; }
+.cip { flex: 0 0 auto; background: var(--card); border: 1px solid var(--line); color: var(--fg); border-radius: 16px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+.cip:hover { background: var(--card2); }
+.cip[aria-pressed="true"] { border-color: var(--blue-soft); color: var(--blue-soft); }
+.chat { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+.chat::-webkit-scrollbar { display: none; }
+.row { display: flex; gap: 8px; align-items: flex-end; }
+.row.me { justify-content: flex-end; }
+.av { flex: 0 0 30px; height: 30px; border-radius: 50%; background: var(--avatar); display: grid; place-items: center; }
+.stack { max-width: 82%; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bub { padding: 11px 14px; font-size: 15px; line-height: 1.42; border-radius: 18px; animation: pop .28s ease-out both; }
+.bub.g { background: var(--card); border-bottom-left-radius: 6px; }
+.bub.me { background: var(--blue-bubble); border-bottom-right-radius: 6px; }
+.bub .mic { opacity: .8; margin-right: 4px; }
+.card { background: var(--card); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; animation: pop .3s ease-out both; }
+.card.warn { background: var(--red-bg); border: 1px solid rgba(255,122,122,.45); }
+.card .ct { font-size: 11.5px; font-weight: 700; letter-spacing: .7px; color: var(--muted); }
+.card.warn .ct { color: var(--red); }
+.kv { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; }
+.kv span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill { flex: 0 0 auto; background: var(--green-bg); color: var(--green); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pill.red { background: var(--red-bg); color: var(--red); }
+.card p { margin: 0; font-size: 14px; line-height: 1.45; color: #E8E8EE; }
+.btns { display: flex; gap: 8px; }
+.b-white { background: #fff; color: var(--blue-bubble); border: 0; border-radius: 20px; height: 40px; padding: 0 16px; font-weight: 700; font-size: 14.5px; }
+.b-dark { background: var(--card2); color: #fff; border: 0; border-radius: 20px; height: 40px; padding: 0 16px; font-weight: 700; font-size: 14.5px; }
+.typing { display: flex; gap: 5px; padding: 14px 16px; background: var(--card); border-radius: 18px; border-bottom-left-radius: 6px; width: max-content; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+.inputbar { flex: 0 0 auto; margin: 6px 14px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 26px; display: flex; align-items: center; padding: 5px 5px 5px 16px; gap: 8px; min-height: 52px; }
+.inputbar .ph { flex: 1; color: var(--dim); font-size: 15px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.inputbar .ph.live { color: var(--fg); }
+.micbtn { width: 42px; height: 42px; border-radius: 50%; background: var(--blue); border: 0; display: grid; place-items: center; transition: background .2s; }
+.micbtn.rec { background: #E0445A; box-shadow: 0 0 0 0 rgba(224,68,90,.6); animation: ring 1.2s infinite; }
+.wave { display: none; gap: 3px; align-items: center; height: 20px; }
+.wave.on { display: flex; }
+.wave i { width: 3px; background: var(--blue-soft); border-radius: 2px; animation: wave .9s ease-in-out infinite; }
+.nav { flex: 0 0 auto; margin: 0 10px 14px; padding: 5px; background: #222229; border: 1px solid rgba(255,255,255,.12); border-radius: 30px; display: flex; gap: 2px; }
+.nav button { flex: 1; height: 50px; border: 0; background: transparent; border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: #fff; }
+.nav button:hover { background: rgba(255,255,255,.05); }
+.nav button.on { background: #0F0F13; color: var(--blue-soft); }
+
+/* obrazovky v telefonu */
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.screen.scroll { overflow-y: auto; scrollbar-width: none; }
+.screen.scroll::-webkit-scrollbar { display: none; }
+.pad { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.sekce { font-size: 18px; font-weight: 700; margin-top: 4px; }
+.zust { background: var(--blue-bubble); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 4px; }
+.zust-n { font-size: 34px; font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.pohyb { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 4px 6px; margin: -4px -6px; }
+.pohyb.novy { animation: novy 2.4s ease-out both; }
+.zust.flash { animation: flash 1.2s ease-out; }
+@keyframes novy { 0% { background: rgba(255,122,122,.35); } 100% { background: rgba(255,122,122,.08); } }
+@keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(90,162,255,.8); } 100% { box-shadow: 0 0 0 18px rgba(90,162,255,0); } }
+.pohyb .l { flex: 1; min-width: 0; }
+.pohyb .l b { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pohyb .l span { font-size: 12px; color: var(--dim); }
+.grad { border-radius: 26px; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(180deg, #3A3C92, #26286A); padding: 16px 16px 20px; text-align: center; transition: background .4s; }
+.grad.fial { background: linear-gradient(180deg, #5D2F80, #311A4A); }
+.grad.ok { background: linear-gradient(180deg, #1F6B45, #12361F); }
+.grad h3 { margin: 4px 0 0; font-size: 30px; letter-spacing: -.5px; }
+.grad p { margin: 6px 0 0; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.telefony { width: 100%; height: auto; display: block; }
+.telefony .tl { transform-origin: 102px 104px; transform: rotate(-10deg); }
+.telefony .tr { transform-origin: 198px 104px; transform: rotate(10deg); }
+.grad.tres .tel { animation: tres .45s ease-in-out 2; }
+.castka { display: flex; justify-content: center; align-items: baseline; gap: 6px; font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.castka span { font-size: 20px; color: var(--muted); }
+.b-blue { background: var(--blue); color: #fff; border: 0; border-radius: 24px; height: 48px; padding: 0 18px; font-weight: 700; font-size: 15px; width: 100%; }
+.ask { background: var(--blue); color: #fff; border: 0; border-radius: 24px; min-height: 48px; padding: 8px 14px; font-weight: 700; font-size: 14.5px; }
+.ask2 { background: var(--card2); }
+.firmaOtazky { display: flex; flex-direction: column; gap: 8px; }
+.seg { display: flex; gap: 2px; padding: 4px; background: #222229; border: 1px solid rgba(255,255,255,.12); border-radius: 24px; }
+.seg button { flex: 1; height: 38px; border: 0; border-radius: 19px; background: transparent; color: #fff; font-weight: 600; font-size: 13.5px; }
+.seg button.on { background: #0F0F13; color: var(--blue-soft); }
+.sit { position: relative; width: 100%; aspect-ratio: 342 / 330; max-width: 100%; }
+.sit svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.uzel { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; color: #fff; padding: 0; }
+.uzel .kr { width: 46px; height: 46px; border-radius: 50%; background: var(--card); border: 3px solid; display: grid; place-items: center; font-size: 19px; }
+.uzel.f .kr { border-radius: 11px; width: 38px; height: 38px; border: 1.5px dashed #6F9BEA; background: var(--avatar); font-size: 16px; }
+.uzel.ja .kr { width: 54px; height: 54px; border-color: #fff; }
+.uzel.sel .kr { box-shadow: 0 0 14px #5AA2FF; }
+.uzel b { font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.uzel small { font-size: 9.5px; color: var(--dim); white-space: nowrap; }
+@keyframes tres { 0%, 100% { translate: 0 0; } 25% { translate: -8px 0; } 75% { translate: 8px 0; } }
+.chart { width: 100%; height: auto; display: block; }
+.banner { position: absolute; left: 12px; right: 12px; top: 56px; z-index: 6; background: var(--red-bg); border: 1px solid var(--red); border-radius: 18px; padding: 12px 14px; transform: translateY(-160%); transition: transform .4s ease; }
+.banner.on { transform: translateY(0); }
+.banner b { display: block; font-size: 11.5px; letter-spacing: .7px; color: var(--muted); margin-bottom: 2px; }
+.banner span { font-size: 14px; line-height: 1.4; }
+
+/* ---- pravý panel: pod kapotou ---- */
+.trace-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.trace-head h3 { margin: 0; font-size: 20px; font-weight: 700; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--dim); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: 1px; }
+.trace { display: flex; flex-direction: column; gap: 8px; max-height: 560px; overflow-y: auto; padding-right: 4px; }
+.step { display: grid; grid-template-columns: 4px 1fr; gap: 12px; background: var(--card); border-radius: 14px; padding: 11px 14px 11px 0; animation: slide .3s ease-out both; min-width: 0; }
+.step .bar { border-radius: 0 3px 3px 0; }
+.step .who { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.step .what { font-size: 14px; line-height: 1.45; margin-top: 3px; color: #E8E8EE; overflow-wrap: anywhere; }
+.step code { font-family: var(--mono); font-size: 12.5px; background: var(--bg); padding: 1px 6px; border-radius: 6px; color: var(--blue-soft); }
+.step.ai .bar { background: var(--blue-soft); } .step.ai .who { color: var(--blue-soft); }
+.step.tool .bar { background: #B98CFF; } .step.tool .who { color: #B98CFF; }
+.step.rule .bar { background: var(--amber); } .step.rule .who { color: var(--amber); }
+.step.ok .bar { background: var(--green); } .step.ok .who { color: var(--green); }
+.step.stop .bar { background: var(--red); } .step.stop .who { color: var(--red); }
+.empty { color: var(--dim); font-size: 14px; line-height: 1.5; background: var(--card); border-radius: 14px; padding: 14px; }
+.tomas { background: var(--card); border-radius: 18px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); }
+.tomas.alert { border-color: var(--red); background: var(--red-bg); animation: shake .5s ease; }
+.tomas .ph { flex: 0 0 34px; height: 54px; border-radius: 8px; border: 2px solid #4A4A55; display: grid; place-items: center; font-size: 16px; }
+.tomas b { font-size: 13px; letter-spacing: .5px; color: var(--muted); }
+.tomas p { margin: 4px 0 0; font-size: 14px; line-height: 1.45; }
+.note { color: var(--dim); font-size: 12.5px; line-height: 1.5; }
+
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes slide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes wave { 0%, 100% { height: 4px; } 50% { height: 18px; } }
+@keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(224,68,90,.55); } 100% { box-shadow: 0 0 0 14px rgba(224,68,90,0); } }
+@keyframes shake { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* základní reset (na Claude Artifacts ho přidávala obálka stránky) */
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- scénáře -->
+  <aside class="side" aria-label="Scénáře">
+    <div class="brand">
+      <h1>George naživo</h1>
+      <p>Hlasový asistent banky. Vyberte scénář, George odpoví a vpravo uvidíte, co se děje pod kapotou.</p>
+    </div>
+    <div class="label">Scénáře · účet Jany</div>
+    <div id="scenare" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="label">Ovládání</div>
+    <div class="ctrls">
+      <button class="ctrl" id="btnFull" type="button">⛶ Celá obrazovka</button>
+      <button class="ctrl" id="btnAuto" type="button">▶ Auto demo</button>
+      <button class="ctrl" id="btnHlas" type="button" aria-pressed="false">🔈 Hlas vyp.</button>
+      <button class="ctrl" id="btnReset" type="button">↺ Reset</button>
+    </div>
+    <p class="keys"><kbd>1</kbd>–<kbd>4</kbd> scénář (nebo klepněte na dotaz v telefonu) · <kbd>Mezerník</kbd> potvrdit „ano“ · <kbd>N</kbd> „ne“ · <kbd>F</kbd> celá obrazovka · <kbd>A</kbd> auto demo · <kbd>R</kbd> reset</p>
+    <p class="note" id="fullNote" hidden>Celou obrazovku tady prohlížeč nepovolil. Použijte klávesu F11.</p>
+    <p class="note">Ukázková data, fiktivní jména. Zatřesení telefonem ukážeme naživo na skutečných telefonech.</p>
+  </aside>
+
+  <!-- telefon -->
+  <div class="phone-wrap" id="phoneWrap">
+    <div class="phone" id="phone" role="region" aria-label="Telefon s aplikací George">
+      <div class="notch"></div>
+      <div class="statusbar"><span id="clock">9:41</span><span class="ic">▮▮▮ 5G ▭</span></div>
+      <!-- George -->
+      <div class="screen" data-scr="george">
+        <div class="head">
+          <h2>Váš George</h2>
+          <div class="st">● Spojeno s bankou · <span id="balance">48 320 Kč</span></div>
+        </div>
+        <div class="cipy" id="cipy" aria-label="Rychlé dotazy"></div>
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="inputbar">
+          <div class="wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="ph" id="inputText">Zeptejte se Georga</div>
+          <div class="micbtn" id="mic" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Přehled -->
+      <div class="screen scroll" data-scr="prehled" hidden>
+        <div class="head"><h2>Přehled</h2><div class="st">Jana Dvořáková · 123456789/0800</div></div>
+        <div class="pad">
+          <div class="zust"><div class="ct" style="color:#DCE8FF">ZŮSTATEK</div><div class="zust-n" id="zustVelky">48 320 Kč</div><div class="st" style="color:#DCE8FF">Aktuální stav z banky</div></div>
+          <div class="sekce">Strážce</div>
+          <div class="card"><p>🛡 Váš Strážce je <b>Tomáš Dvořák</b>. Dostane zprávu, když George zastaví podezřelou platbu.</p></div>
+          <div class="sekce">Historie převodů</div>
+          <div class="card" id="historie"></div>
+        </div>
+      </div>
+
+      <!-- Zatřes -->
+      <div class="screen scroll" data-scr="zatres" hidden>
+        <div class="pad" style="padding-top:8px">
+          <div class="grad" id="zatresKarta">
+            <svg viewBox="0 0 300 200" class="telefony" aria-hidden="true">
+              <ellipse cx="150" cy="185" rx="90" ry="10" fill="rgba(10,10,50,.45)"/>
+              <g class="tel tl"><rect x="70" y="40" width="64" height="128" rx="13" fill="#E9EAFF"/><rect x="77" y="51" width="50" height="104" rx="7" fill="#2B6FD6"/></g>
+              <g class="tel tr"><rect x="166" y="40" width="64" height="128" rx="13" fill="#E9EAFF"/><rect x="173" y="51" width="50" height="104" rx="7" fill="#2B6FD6"/></g>
+              <circle cx="150" cy="26" r="18" fill="#F1C35A"/><text x="150" y="32" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">Kč</text>
+            </svg>
+            <h3>Zatřes</h3>
+            <p id="zatresPopis">Přiložte telefony k sobě a zatřeste oběma ve stejnou chvíli.</p>
+          </div>
+          <div id="zatresAkce"></div>
+          <p class="st" style="text-align:center">Max. 1 000 Kč, peníze odejdou až po potvrzení obou stran. Naživo ukážeme na skutečných telefonech.</p>
+        </div>
+      </div>
+
+      <!-- Moje peníze -->
+      <div class="screen scroll" data-scr="penize" hidden>
+        <div class="head"><h2 id="penizeNadpis">Moje peníze</h2><div class="st" id="penizePodnadpis">Jana · co hýbe vašimi penězi</div></div>
+        <div class="pad">
+          <div class="seg" role="group" aria-label="Osobní nebo firemní účet">
+            <button type="button" class="on" data-rezim="p">👤 Osobní</button>
+            <button type="button" data-rezim="f">🏢 Firma</button>
+          </div>
+          <button class="ask" type="button" id="askDovolit">🎙 Kolik si můžu dovolit?</button>
+          <div class="firmaOtazky" id="firmaOtazky" hidden>
+            <button class="ask" type="button" id="askFaktura">🧾 Odběratel zaplatí o 2 měsíce později?</button>
+            <button class="ask ask2" type="button" id="askStroj">🏗️ Můžeme koupit CNC stroj za 1,2 mil.?</button>
+          </div>
+          <div class="sit" id="sit"></div>
+          <div class="card" id="sitDetail"></div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Navigace aplikace">
+        <button type="button" data-tab="prehled">⌂<span>Přehled</span></button>
+        <button type="button" data-tab="george" class="on">✦<span>George</span></button>
+        <button type="button" data-tab="zatres">▯▯<span>Zatřes</span></button>
+        <button type="button" data-tab="penize">⌬<span>Peníze</span></button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- pod kapotou -->
+  <section class="side" aria-label="Pod kapotou">
+    <div class="trace-head"><h3>Pod kapotou</h3><span class="note" id="scenName"></span></div>
+    <div class="legend">
+      <span><i style="background:var(--blue-soft)"></i>AI (řeč a jazyk)</span>
+      <span><i style="background:#B98CFF"></i>nástroj banky</span>
+      <span><i style="background:var(--amber)"></i>pevné pravidlo</span>
+      <span><i style="background:var(--green)"></i>provedeno</span>
+      <span><i style="background:var(--red)"></i>zastaveno</span>
+    </div>
+    <div class="trace" id="trace"><div class="empty">Vyberte scénář vlevo nebo stiskněte <b>A</b> pro automatické demo. Tady se ukáže každý krok: co AI pochopila, jaký nástroj zavolala a co zkontrolovala pevná pravidla.</div></div>
+    <div class="label">Telefon Tomáše (Strážce)</div>
+    <div class="tomas" id="tomas">
+      <div class="ph">📱</div>
+      <div><b>TOMÁŠ · VNUK</b><p id="tomasText">Žádná upozornění. Zůstatek babičky nevidí, dostane jen signál, když něco nehraje.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Stav dema (ilustrační data, stejná jako v aplikaci)
+// ---------------------------------------------------------------------------
+const START = { zustatek: 48320, hlasemDnes: 0 };
+const POHYBY_START = [
+  { popis: 'ČEZ Prodej – záloha elektřina', castka: -1850, kdy: '25. 11.' },
+  { popis: 'Důchod', castka: 21400, kdy: '20. 11.' },
+  { popis: 'Pražské vodovody', castka: -620, kdy: '18. 11.' },
+  { popis: 'ČEZ Prodej – záloha elektřina', castka: -1850, kdy: '25. 10.' },
+];
+let S = { ...START, pohyby: POHYBY_START.map((p) => ({ ...p })) };
+let beh = 0;              // id běžícího scénáře; zvýšení zruší rozběhnutý scénář
+let cekaNaPotvrzeni = null;
+let hlas = false;
+let auto = false;
+
+const $ = (s) => document.querySelector(s);
+const kc = (n) => Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Kč';
+const pauza = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------------------------------------------------------------------------
+// Prognóza pro "Kolik si můžu dovolit?" (stejný výpočet jako v aplikaci)
+// ---------------------------------------------------------------------------
+function prognoza(nakup) {
+  const body = []; let b = 52000;
+  const start = new Date(2026, 10, 28), konec = new Date(2027, 6, 31);
+  for (let d = new Date(start); d <= konec; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    const den = d.getDate();
+    if (den === 15) b += 64500;
+    if (den === 5) b -= 5716; if (den === 10) b -= 2900; if (den === 20) b -= 21281; if (den === 3) b -= 1570;
+    if (d.getMonth() === 2 && den === 8) b -= 15500;
+    b -= (31400 - 1570) / 30;
+    if (nakup && d.getTime() === start.getTime()) b -= nakup;
+    body.push({ d: new Date(d), b });
+  }
+  return body;
+}
+function graf(body, rezerva) {
+  const W = 268, H = 96, pl = 4, pr = 4, pt = 8, pb = 16;
+  const min = Math.min(0, ...body.map((p) => p.b), rezerva) - 2000, max = Math.max(...body.map((p) => p.b)) + 2000;
+  const x = (i) => pl + (i / (body.length - 1)) * (W - pl - pr), y = (v) => pt + (1 - (v - min) / (max - min)) * (H - pt - pb);
+  const path = body.filter((_, i) => i % 2 === 0).map((p, k) => `${k ? 'L' : 'M'}${x(body.indexOf(p)).toFixed(1)},${y(p.b).toFixed(1)}`).join(' ');
+  const bad = body.map((p, i) => (p.b < rezerva ? i : -1)).filter((i) => i >= 0);
+  const mesice = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
+  const ticks = body.map((p, i) => (p.d.getDate() === 1 && p.d.getMonth() % 2 === 0 ? `<text x="${x(i).toFixed(1)}" y="${H - 3}" font-size="8" fill="#8E8E98" text-anchor="middle">${mesice[p.d.getMonth()]}</text>` : '')).join('');
+  const mi = bad.length ? body.indexOf(body.find((p) => p.b < rezerva)) : -1;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Odhad zůstatku do července; v březnu klesne pod rezervu">
+    ${bad.length ? `<rect x="${x(bad[0])}" y="${pt}" width="${Math.max(3, x(bad[bad.length - 1]) - x(bad[0]))}" height="${H - pt - pb}" fill="#E0457B" opacity=".18"/>` : ''}
+    <line x1="${pl}" x2="${W - pr}" y1="${y(rezerva)}" y2="${y(rezerva)}" stroke="#E0457B" stroke-dasharray="3 3"/>
+    <text x="${W - pr}" y="${y(rezerva) + 10}" font-size="8" fill="#ff8fae" text-anchor="end">rezerva ${kc(rezerva)}</text>
+    <path d="${path}" fill="none" stroke="#5AA2FF" stroke-width="2" stroke-linejoin="round"/>
+    ${mi >= 0 ? `<circle cx="${x(mi)}" cy="${y(body[mi].b)}" r="4" fill="#E0457B" stroke="#fff" stroke-width="1.5"/>` : ''}
+    ${ticks}</svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Vykreslování do telefonu a do panelu "Pod kapotou"
+// ---------------------------------------------------------------------------
+const chat = $('#chat');
+const AVATAR = '<div class="av"><svg width="16" height="16" viewBox="0 0 24 24" fill="#5AA2FF"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></div>';
+
+function dolu() { chat.scrollTop = chat.scrollHeight; }
+function pridejJa(text) {
+  const r = document.createElement('div'); r.className = 'row me';
+  r.innerHTML = `<div class="stack"><div class="bub me"><span class="mic">🎙</span>${text}</div></div>`;
+  chat.appendChild(r); dolu();
+}
+function pridejGeorge(text, karty = '') {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `${AVATAR}<div class="stack"><div class="bub g">${text}</div>${karty}</div>`;
+  chat.appendChild(r); dolu();
+  mluv(text);
+  return r;
+}
+function pise() {
+  const r = document.createElement('div'); r.className = 'row'; r.id = 'pise';
+  r.innerHTML = `${AVATAR}<div class="typing"><i></i><i></i><i></i></div>`;
+  chat.appendChild(r); dolu();
+}
+function nepise() { const p = $('#pise'); if (p) p.remove(); }
+function krok(druh, kdo, co) {
+  const t = $('#trace'); const e = t.querySelector('.empty'); if (e) e.remove();
+  const d = document.createElement('div'); d.className = `step ${druh}`;
+  d.innerHTML = `<div class="bar"></div><div><div class="who">${kdo}</div><div class="what">${co}</div></div>`;
+  t.appendChild(d); t.scrollTop = t.scrollHeight;
+}
+function zustatek(n) { S.zustatek = n; $('#balance').textContent = kc(n); $('#zustVelky').textContent = kc(n); }
+function pridejPohyb(popis, castka) {
+  const d = new Date();
+  S.pohyby.forEach((p) => { p.novy = false; });
+  S.pohyby.unshift({ novy: true, popis, castka, kdy: `${d.getDate()}. ${d.getMonth() + 1}. · ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}` });
+  zustatek(S.zustatek + castka);
+  renderPrehled();
+}
+function mluv(text) {
+  if (!hlas || !('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
+    u.lang = 'cs-CZ'; u.rate = 1.05;
+    const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith('cs'));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) { /* hlas není k dispozici */ }
+}
+
+// "Mluví" klient: vlna u mikrofonu a postupně psaný přepis
+async function klientMluvi(id, text) {
+  const mic = $('#mic'), wave = $('#wave'), inp = $('#inputText');
+  mic.classList.add('rec'); wave.classList.add('on'); inp.classList.add('live'); inp.textContent = '';
+  for (let i = 1; i <= text.length; i++) {
+    if (id !== beh) return false;
+    inp.textContent = text.slice(0, i);
+    await pauza(text.length > 50 ? 22 : 34);
+  }
+  await pauza(350);
+  mic.classList.remove('rec'); wave.classList.remove('on'); inp.classList.remove('live'); inp.textContent = 'Zeptejte se Georga';
+  if (id !== beh) return false;
+  pridejJa(text);
+  krok('ai', 'Řeč → text', `Přepis hlasu v češtině: „${text}“`);
+  return true;
+}
+async function premysli(id, ms = 900) {
+  pise(); await pauza(ms); nepise(); return id === beh;
+}
+
+// Potvrzení "ano / ne" – karta v telefonu, mezerník, nebo samo v auto demu
+function potvrzeni(id) {
+  return new Promise((resolve) => {
+    cekaNaPotvrzeni = (odpoved) => { cekaNaPotvrzeni = null; resolve(odpoved); };
+    if (auto) setTimeout(() => { if (cekaNaPotvrzeni && id === beh) cekaNaPotvrzeni('ano'); }, 1800);
+  });
+}
+function kartaPlatby(prijemce, castka) {
+  return `<div class="card"><div class="ct">PLATBA K POTVRZENÍ</div>
+    <div class="kv"><span>Příjemce</span><span class="pill">${prijemce}</span></div>
+    <div class="kv"><span>Částka</span><span class="pill">${kc(castka)}</span></div>
+    <div class="btns"><button class="b-white" type="button" data-odpoved="ano">Ano, poslat</button><button class="b-dark" type="button" data-odpoved="ne">Ne</button></div></div>`;
+}
+chat.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-odpoved]');
+  if (b && cekaNaPotvrzeni) { b.closest('.btns').remove(); cekaNaPotvrzeni(b.dataset.odpoved); }
+});
+
+async function platba(id, prijemce, castka, popisNastroje) {
+  krok('tool', 'Nástroj banky', popisNastroje);
+  krok('rule', 'Pevné pravidlo', `<code>kontrola_hlasove_platby</code>: známý příjemce ✓ · ${kc(S.hlasemDnes + castka)} z denního limitu 5 000 Kč ✓ · zůstatek ✓`);
+  krok('ai', 'George', 'Zopakuje příjemce a částku. Bez „ano“ klienta se nic neprovede.');
+  pridejGeorge(`Pošlu ${kc(castka)} pro ${prijemce}. Mám to poslat?`, kartaPlatby(prijemce, castka));
+  const odpoved = await potvrzeni(id);
+  if (id !== beh) return;
+  chat.querySelectorAll('.btns').forEach((b) => b.remove());
+  pridejJa(odpoved === 'ano' ? 'Ano, pošli to.' : 'Ne.');
+  if (odpoved !== 'ano') {
+    krok('ok', 'Zrušeno', 'Klient řekl „ne“, platba se neprovedla.');
+    pridejGeorge('Dobře, nic jsem neposlal.');
+    return;
+  }
+  if (!(await premysli(id, 600))) return;
+  krok('rule', 'Pevné pravidlo', 'Kontrola znovu těsně před převodem: limit, zůstatek, podezření na podvod.');
+  S.hlasemDnes += castka;
+  pridejPohyb(prijemce, -castka);
+  krok('ok', 'Provedeno', `Odesláno ${kc(castka)} → ${prijemce}. Zůstatek ${kc(S.zustatek)}.`);
+  pridejGeorge(`Hotovo. Poslal jsem ${kc(castka)}. Na účtu máte ${kc(S.zustatek)}.`,
+    `<div class="card"><div class="ct">ODESLÁNO</div><div class="kv"><span>${prijemce}</span><span class="pill">−${kc(castka)}</span></div><div class="kv"><span>Zůstatek</span><span class="pill">${kc(S.zustatek)}</span></div></div>`);
+}
+
+// ---------------------------------------------------------------------------
+// Scénáře
+// ---------------------------------------------------------------------------
+const VSECHNY = [
+  {
+    nazev: 'Zaplať elektřinu', cip: 'Zaplatit elektřinu', sub: 'platba „jako minule“', text: 'Zaplať elektřinu jako minule',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('rule', 'Pevné pravidlo', '<code>vyhodnot_vishing</code>: žádný vzorec podvodu ✓');
+      krok('ai', 'George pochopil', 'Záměr: zaplatit stejnému příjemci jako minule → volá nástroj.');
+      await platba(id, 'ČEZ Prodej', 1850, '<code>platba_jako_minule("elektřina")</code> → ČEZ Prodej, naposledy 1 850 Kč (25. 10.)');
+    },
+  },
+  {
+    nazev: 'Pošli Tomášovi 300', cip: 'Poslat Tomášovi', sub: 'známý kontakt', text: 'Pošli Tomášovi tři sta korun',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('rule', 'Pevné pravidlo', '<code>vyhodnot_vishing</code>: žádný vzorec podvodu ✓');
+      krok('ai', 'George pochopil', 'Příjemce „Tomáš“, částka 300 Kč (z „tři sta korun“).');
+      await platba(id, 'Tomáš (vnuk)', 300, '<code>poslat_znamemu("Tomáš", 300)</code> → kontakt nalezen, účet 987654321/0800');
+      if (id === beh && chat.lastElementChild && chat.lastElementChild.textContent.includes('Hotovo')) {
+        krok('ok', 'Živá událost', 'Tomášovi přišla push zpráva o příchozí platbě (WebSocket).');
+        const t = $('#tomas'); t.classList.remove('alert'); t.style.borderColor = 'var(--green)';
+        $('#tomasText').innerHTML = '<b style="color:var(--green)">PŘÍCHOZÍ PLATBA</b><br>Babička Jana vám poslala 300 Kč.';
+      }
+    },
+  },
+  {
+    nazev: 'Nový příjemce', cip: 'Poslat sousedce', sub: 'sousedka Marie, 2 000 Kč', text: 'Pošli sousedce Marii dva tisíce',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('tool', 'Nástroj banky', '<code>poslat_znamemu("Marie", 2000)</code> → mezi kontakty není');
+      krok('stop', 'Pevné pravidlo', 'Hlasem jen známým příjemcům. Nového příjemce přidá klient v aplikaci nebo se Strážcem.');
+      pridejGeorge('Hlasem posílám peníze jen známým lidem. Marii si prosím přidejte v aplikaci, nebo vám pomůže Tomáš.',
+        '<div class="card warn"><div class="ct">PLATBA NEPROVEDENA</div><p>Nový příjemce hlasem nejde. Ochrana proti podvodníkům, kteří diktují číslo účtu.</p></div>');
+    },
+  },
+  {
+    nazev: 'Nad denní limit', sub: 'Tomášovi 6 000 Kč', text: 'Pošli Tomášovi šest tisíc',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('tool', 'Nástroj banky', '<code>poslat_znamemu("Tomáš", 6000)</code>');
+      krok('stop', 'Pevné pravidlo', `<code>kontrola_hlasove_platby</code>: ${kc(S.hlasemDnes + 6000)} > denní limit 5 000 Kč → zamítnuto`);
+      krok('ai', 'George', 'AI nemůže pravidlo obejít. Jen řekne důvod a nabídne cestu.');
+      pridejGeorge('Hlasem lze poslat nejvýš 5 000 Kč denně. Vyšší částku prosím zadejte v aplikaci.',
+        '<div class="card warn"><div class="ct">PLATBA NEPROVEDENA</div><p>Denní limit pro hlasové platby: 5 000 Kč.</p></div>');
+    },
+  },
+  {
+    nazev: 'Volali mi z banky…', sub: 'pokus o podvod (vishing)', text: 'Volali mi z banky, mám rychle převést peníze na bezpečný účet',
+    async run(id) {
+      if (!(await premysli(id, 700))) return;
+      krok('stop', 'Pevné pravidlo', '<code>vyhodnot_vishing</code>: „z banky“ + „rychle“ + „bezpečný účet“ → vzorec podvodu');
+      krok('stop', 'Zastaveno', 'Platby v této konverzaci jsou zablokované. Rozhodl kód, ne AI.');
+      pridejGeorge('Tuhle platbu jsem pozastavil. Volá vám teď někdo jiný? Banka nikdy nechce převod na bezpečný účet. Dal jsem vědět Tomášovi.',
+        '<div class="card warn"><div class="ct">⚠ PLATBA POZASTAVENA</div><p>Vypadá to na telefonní podvod. Zavěste a zavolejte do banky na číslo z karty.</p></div><div class="card"><div class="ct">STRÁŽCE</div><div class="kv"><span>Tomáš (vnuk)</span><span class="pill">upozorněn</span></div></div>');
+      await pauza(500);
+      if (id !== beh) return;
+      krok('tool', 'Nástroj banky', '<code>upozornit_strazce()</code> → push na telefon Tomáše');
+      const t = $('#tomas'); t.style.borderColor = ''; t.classList.remove('alert'); void t.offsetWidth; t.classList.add('alert');
+      $('#tomasText').innerHTML = '<b style="color:var(--red)">UPOZORNĚNÍ STRÁŽCE</b><br>Babička Jana: možný telefonní podvod. Platba je pozastavena. Zavolejte jí prosím.';
+    },
+  },
+  {
+    nazev: 'Mám koupit akcie?', sub: 'investiční rada', text: 'Mám koupit akcie Nvidie?',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('rule', 'Pravidlo (MiFID II)', 'George investice vysvětluje, ale nikdy neradí „kupte / prodejte“.');
+      krok('tool', 'Nástroj banky', '<code>spojit_s_poradcem("akcie")</code>');
+      pridejGeorge('Konkrétní investiční radu vám dá poradce. Můžu vás spojit, ozve se do 15 minut.',
+        '<div class="card"><div class="ct">PORADCE</div><div class="kv"><span>Ozve se do</span><span class="pill">15 min</span></div></div>');
+    },
+  },
+  {
+    nazev: 'Kolik si můžu dovolit?', cip: 'Kolik si můžu dovolit?', sub: 'telefon za 18 000 Kč', text: 'Můžu si koupit telefon za osmnáct tisíc?',
+    async run(id) {
+      if (!(await premysli(id, 1000))) return;
+      krok('tool', 'Výpočet banky', 'Prognóza zůstatku den po dni do července: výplata 15., hypotéka 20., roční pojištění v březnu.');
+      krok('rule', 'Pevný výpočet', 'Nákup dnes → 8. března klesne zůstatek pod rezervu 5 000 Kč (chybí ~4 000 Kč). První bezpečná výplata: 15. dubna.');
+      krok('ai', 'George', 'AI čísla nepočítá, jen je převypráví jednou větou.');
+      pridejGeorge('Dnes ano, ale v březnu by vám chybělo asi 4 000 Kč na běžné platby. Když počkáte do výplaty 15. dubna, vyjde to bez problémů.',
+        `<div class="card"><div class="ct">ODHAD ZŮSTATKU</div>${graf(prognoza(18000), 5000)}<p style="color:var(--dim);font-size:12.5px">Odhad, ne rada. Nic se neobjedná ani neodečte.</p></div>`);
+    },
+  },
+  {
+    nazev: 'Ztratila jsem kartu', sub: 'okamžitá ochrana', text: 'Ztratila jsem peněženku i s kartou',
+    async run(id) {
+      if (!(await premysli(id))) return;
+      krok('ai', 'George pochopil', 'Ztráta karty = ochrana klienta, blokace hned, bez potvrzení.');
+      krok('tool', 'Nástroj banky', '<code>zablokovat_kartu()</code> → karta zablokována');
+      krok('ok', 'Provedeno', 'Karta je zablokovaná. Novou lze objednat v aplikaci.');
+      pridejGeorge('Kartu jsem hned zablokoval. Novou si můžete objednat v aplikaci nebo na pobočce.',
+        '<div class="card"><div class="ct">KARTA</div><div class="kv"><span>Platební karta</span><span class="pill red">zablokována</span></div></div>');
+    },
+  },
+];
+
+// na prezentaci jen tyto čtyři: elektřina, Tomáš, nový příjemce, Kolik si můžu dovolit
+const SCENARE = [0, 1, 2, 6].map((i) => VSECHNY[i]);
+
+// seznam scénářů vlevo
+const seznam = $('#scenare');
+SCENARE.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.className = 'scen'; b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = `<span class="k">${i + 1}</span><span><span class="t">${s.nazev}</span><span class="s">${s.sub}</span></span>`;
+  b.addEventListener('click', () => { zastavAuto(); spust(i); });
+  seznam.appendChild(b);
+  // stejný dotaz jako klikací karta přímo v telefonu
+  const c = document.createElement('button');
+  c.className = 'cip'; c.type = 'button'; c.textContent = s.cip; c.setAttribute('aria-pressed', 'false');
+  c.addEventListener('click', () => { zastavAuto(); spust(i); });
+  $('#cipy').appendChild(c);
+});
+
+// ---------------------------------------------------------------------------
+// Navigace v telefonu: Přehled, George, Zatřes, Peníze
+// ---------------------------------------------------------------------------
+function ukazObrazovku(nazev) {
+  document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.dataset.scr !== nazev; });
+  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === nazev));
+  if (nazev === 'george') dolu();
+}
+document.querySelectorAll('.nav button').forEach((b) => b.addEventListener('click', () => ukazObrazovku(b.dataset.tab)));
+
+// ---- Přehled --------------------------------------------------------------
+function renderPrehled() {
+  $('#historie').innerHTML = S.pohyby.slice(0, 8).map((p) =>
+    `<div class="pohyb ${p.novy ? 'novy' : ''}"><div class="l"><b>${p.popis}</b><span>${p.kdy}</span></div><span class="pill ${p.castka < 0 ? 'red' : ''}">${p.castka < 0 ? '−' : '+'}${kc(p.castka)}</span></div>`).join('');
+}
+
+// ---- Zatřes (simulace; naživo to ukážeme na telefonech) -------------------
+let zatresBeh = 0;
+function zatresKlid() {
+  zatresBeh++;
+  const k = $('#zatresKarta'); k.className = 'grad';
+  $('#zatresPopis').textContent = 'Přiložte telefony k sobě a zatřeste oběma ve stejnou chvíli.';
+  $('#zatresAkce').innerHTML = '<button class="b-blue" type="button" id="btnZatrest">Zatřást</button>';
+  $('#btnZatrest').addEventListener('click', zatrest);
+}
+/** Zatřesení. S `samo = true` (auto demo) se převod po spárování odešle sám a funkce počká na konec. */
+async function zatrest(samo = false) {
+  const id = ++zatresBeh; const k = $('#zatresKarta');
+  k.classList.remove('tres'); void k.offsetWidth; k.classList.add('tres');
+  $('#zatresPopis').textContent = 'Hledám telefon vedle vás…';
+  $('#zatresAkce').innerHTML = '';
+  $('#trace').innerHTML = ''; $('#scenName').textContent = 'Zatřes telefonem';
+  krok('tool', 'Telefon', 'Akcelerometr zachytil zatřesení → zpráva serveru přes WebSocket.');
+  await pauza(1300); if (id !== zatresBeh) return;
+  krok('rule', 'Server', 'Druhé zatřesení přišlo do 3 s → spárováno s telefonem Tomáše.');
+  k.classList.add('fial');
+  $('#zatresPopis').textContent = 'Spojeno: Tomáš Dvořák';
+  $('#zatresAkce').innerHTML = `<div class="card"><div class="ct">POSLAT: TOMÁŠ DVOŘÁK</div><div class="castka">500 <span>Kč</span></div>
+    <div class="btns"><button class="b-white" type="button" id="btnZPoslat">Poslat 500 Kč</button><button class="b-dark" type="button" id="btnZZrusit">Zrušit</button></div></div>`;
+  $('#btnZZrusit').addEventListener('click', () => { krok('ok', 'Zrušeno', 'Klientka převod zrušila.'); zatresKlid(); });
+  const poslat = async () => {
+    krok('rule', 'Pevné pravidlo', '<code>kontrola_zatreseni</code>: 500 Kč ≤ limit 1 000 Kč ✓ · zůstatek ✓');
+    $('#zatresPopis').textContent = 'Čekám, až Tomáš platbu přijme…';
+    $('#zatresAkce').innerHTML = '';
+    await pauza(1500); if (id !== zatresBeh) return;
+    krok('ok', 'Provedeno', 'Tomáš stiskl „Přijmout“ → potvrdily obě strany → převedeno 500 Kč.');
+    pridejPohyb('Zatřesení – Tomáš Dvořák', -500);
+    k.className = 'grad ok';
+    $('#zatresPopis').textContent = 'Hotovo, 500 Kč je u Tomáše.';
+    $('#zatresAkce').innerHTML = '<button class="b-dark" type="button" id="btnZZnovu" style="width:100%">Znovu</button>';
+    $('#btnZZnovu').addEventListener('click', zatresKlid);
+    const t = $('#tomas'); t.classList.remove('alert'); t.style.borderColor = 'var(--green)';
+    $('#tomasText').innerHTML = '<b style="color:var(--green)">PŘÍCHOZÍ PLATBA</b><br>Zatřesení: babička Jana vám poslala 500 Kč.';
+  };
+  $('#btnZPoslat').addEventListener('click', poslat);
+  if (samo) {
+    await pauza(1800); if (id !== zatresBeh) return;
+    const b = $('#btnZPoslat'); if (b) { b.style.transform = 'scale(.95)'; await pauza(200); }
+    await poslat();
+  }
+}
+
+/** V auto demu ukáže Přehled: odečtený zůstatek a nový řádek v historii. */
+async function ukazOdecet(popis) {
+  ukazObrazovku('prehled');
+  const z = $('.zust'); z.classList.remove('flash'); void z.offsetWidth; z.classList.add('flash');
+  krok('ok', 'Účet', `${popis} Zůstatek ${kc(S.zustatek)}, nový řádek v historii převodů.`);
+  await pauza(3600);
+}
+
+// ---- Moje peníze: síť vlivů (čísla stejná jako v aplikaci) ----------------
+const UZLY = [
+  { id: 'ja', e: '🙂', l: 'Já', x: 171, y: 168, druh: 'ja' },
+  { id: 'uspory', e: '💰', l: 'Úspory', v: '100 000 Kč', x: 171, y: 78, sev: '#EE7A3C' },
+  { id: 'hypo', e: '🏠', l: 'Hypotéka', v: '4,9 % do 9/2027', x: 262, y: 122, sev: '#E0344F' },
+  { id: 'uver', e: '💳', l: 'Úvěr', v: '180 000 Kč', x: 286, y: 210, sev: '#E0344F' },
+  { id: 'vydaje', e: '🛒', l: 'Výdaje', v: '31 400 Kč/měs.', x: 171, y: 262, sev: '#E8B010' },
+  { id: 'infl', e: '📉', l: 'Inflace', v: '2,9 %', x: 46, y: 40, druh: 'f' },
+  { id: 'sazby', e: '🏦', l: 'Sazby', v: 'ČNB 3,5 %', x: 296, y: 36, druh: 'f' },
+  { id: 'potr', e: '🍞', l: 'Potraviny', v: '+4,1 %', x: 44, y: 262, druh: 'f' },
+  { id: 'energie', e: '⚡', l: 'Energie', v: '+1,8 %', x: 300, y: 296, druh: 'f' },
+];
+const HRANY = [
+  ['ja', 'uspory', 0], ['ja', 'hypo', 0], ['ja', 'uver', 0], ['ja', 'vydaje', 0],
+  ['infl', 'uspory', 3, '#E8A812'], ['sazby', 'uspory', 2, '#C4B12A'], ['sazby', 'hypo', 7, '#C8284A'], ['sazby', 'uver', 5, '#D8573C'],
+  ['infl', 'vydaje', 2.5, '#A3B32E'], ['potr', 'vydaje', 3, '#C8A11A'], ['energie', 'vydaje', 1.6, '#5FA040'], ['infl', 'uver', 1.6, '#6FA83A'],
+];
+const DETAIL = {
+  ja: '<div class="ct">MOJE FINANČNÍ KONDICE</div><div class="kv"><span>Skóre</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">64 · Průměrná</span></div><div class="kv"><span>💰 Volné peníze ztrácejí hodnotu</span><span class="pill red">Vysoké</span></div><div class="kv"><span>🏠 Fixace končí 9/2027</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">Střední</span></div>',
+  uspory: '<div class="ct">ÚSPORY · BĚŽNÝ ÚČET 0 %</div><div class="kv"><span>Kupní síla za 12 měsíců</span><span class="pill red">97 182 Kč</span></div><p>Na spořicím účtu se 3 % by si úspory udržely hodnotu. Nejde o doporučení.</p>',
+  hypo: '<div class="ct">HYPOTÉKA · FIXACE DO ZÁŘÍ 2027</div><div class="kv"><span>Splátka dnes</span><span class="pill">21 281 Kč</span></div><div class="kv"><span>Při sazbě 5,6 % po fixaci</span><span class="pill">22 752 Kč</span></div><div class="kv"><span>Rozdíl za měsíc</span><span class="pill red">+1 471 Kč</span></div><p>Na hypotéku nejvíc působí úrokové sazby (92 %).</p>',
+  uver: '<div class="ct">ÚVĚR · 8,9 % P. A.</div><div class="kv"><span>Zbývá splatit</span><span class="pill">180 000 Kč</span></div><p>Úspory nenesou úrok, úvěr stojí 8,9 %. Splacením 60 000 Kč byste ušetřili zhruba 5 340 Kč ročně.</p>',
+  vydaje: '<div class="ct">VÝDAJE · TENTO MĚSÍC</div><div class="kv"><span>Celkem</span><span class="pill">31 400 Kč</span></div><div class="kv"><span>Meziročně</span><span class="pill red">+6 %</span></div><p>Nejvíc restaurace (30 %), nad běžným podílem 18 %.</p>',
+  infl: '<div class="ct">INFLACE · 2,9 %</div><p>Ceny rostou a pomalu ubírají hodnotu peněz bez úroku. Nejvíc působí na vaše úspory a výdaje.</p>',
+  sazby: '<div class="ct">ÚROKOVÉ SAZBY · ČNB 3,5 %</div><p>Vyšší sazby zdražují hypotéku a úvěr a zvyšují výnos spoření. Nejsilnější vliv: hypotéka.</p>',
+  potr: '<div class="ct">CENY POTRAVIN · +4,1 %</div><p>Potraviny zdražují rychleji než průměr, ze stejného rozpočtu pokryjete méně.</p>',
+  energie: '<div class="ct">ENERGIE · +1,8 %</div><p>Promítá se do účtů za bydlení a do cen dopravy.</p>',
+};
+// ---- Firemní účet: Truhlářství Novák s.r.o. (ukázková firma) --------------
+const PMT = (P, r, y) => { const i = r / 100 / 12, n = y * 12; return (P * i) / (1 - Math.pow(1 + i, -n)); };
+const STOPS = [[0, [20, 163, 111]], [35, [232, 176, 16]], [60, [238, 122, 60]], [85, [224, 52, 79]], [100, [190, 30, 70]]];
+function sev(v) {
+  v = Math.max(0, Math.min(100, v));
+  for (let i = 1; i < STOPS.length; i++) if (v <= STOPS[i][0]) {
+    const [a, A] = STOPS[i - 1], [b, B] = STOPS[i], t = (v - a) / (b - a);
+    return `rgb(${A.map((x, k) => Math.round(x + (B[k] - x) * t)).join(',')})`;
+  }
+  return 'rgb(190,30,70)';
+}
+// intenzita vlivu = hodnota / maximum (stejně jako v návrhu)
+const FI = { demand: 3.2 / 8, inflation: 2.9 / 8, eur: 2.1 / 6, rates: 3.5 / 5, wages: 7.1 / 12, energy: 1.8 / 8 };
+const FW = {
+  cash: { inflation: 0.6, rates: 0.4 }, revenue: { demand: 0.6, eur: 0.4 }, receivables: { demand: 0.5, rates: 0.5 },
+  loan: { rates: 0.85, inflation: 0.15 }, spending: { wages: 0.45, energy: 0.25, inflation: 0.3 },
+};
+const vlivF = (t, f) => (FW[t][f] || 0) * FI[f] * 100;
+const sc = (y) => Math.round(y * 330 / 420); // plátno návrhu 342×420 → 342×330
+const UZLY_F = [
+  { id: 'you', e: '🪚', l: 'Firma', x: 171, y: sc(205), druh: 'ja' },
+  { id: 'cash', e: '💰', l: 'Hotovost', v: '760 000 Kč', x: 171, y: sc(116), sev: '#E8B010' },
+  { id: 'revenue', e: '📈', l: 'Tržby', v: '1,04 mil./měs.', x: 72, y: sc(170), sev: '#E8B010' },
+  { id: 'receivables', e: '🧾', l: 'Pohledávky', v: '380 000 po splatnosti', x: 270, y: sc(170), sev: '#E0344F' },
+  { id: 'loan', e: '🏗️', l: 'Úvěr na stroje', v: '2,4 mil. · 6,9 %', x: 246, y: sc(290), sev: '#E0344F' },
+  { id: 'spending', e: '📦', l: 'Náklady', v: '1,01 mil./měs.', x: 132, y: sc(326), sev: '#EE7A3C' },
+  { id: 'demand', e: '🛋️', l: 'Poptávka', v: '−3,2 % r/r', x: 42, y: sc(44), druh: 'f' },
+  { id: 'inflation', e: '📉', l: 'Inflace', v: '2,9 %', x: 171, y: sc(26), druh: 'f' },
+  { id: 'eur', e: '💶', l: 'Silná koruna', v: '+2,1 % vůči €', x: 300, y: sc(44), druh: 'f' },
+  { id: 'rates', e: '🏦', l: 'Sazby', v: 'ČNB 3,5 %', x: 34, y: sc(252), druh: 'f' },
+  { id: 'wages', e: '👷', l: 'Mzdy v oboru', v: '+7,1 %', x: 50, y: sc(360), druh: 'f' },
+  { id: 'energy', e: '⚡', l: 'Energie', v: '+1,8 %', x: 306, y: sc(360), druh: 'f' },
+];
+const HRANY_F = [
+  ['you', 'cash', 0], ['you', 'revenue', 0], ['you', 'receivables', 0], ['you', 'loan', 0], ['you', 'spending', 0],
+  ...Object.keys(FW).flatMap((t) => Object.keys(FW[t]).filter((f) => FW[t][f] >= 0.2).map((f) => {
+    const v = vlivF(t, f); return [f, t, 1.2 + Math.min(1, v / 60) * 6, sev(v * 1.7)];
+  })),
+];
+const kc0 = (n) => kc(Math.round(n / 10) * 10);
+const DETAIL_F = {
+  you: '<div class="ct">FINANČNÍ KONDICE FIRMY</div><div class="kv"><span>Skóre</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">61 · Průměrná</span></div><div class="kv"><span>🧾 Pohledávky po splatnosti</span><span class="pill red">Vysoké</span></div><div class="kv"><span>👷 Mzdy rostou rychleji než tržby</span><span class="pill red">Vysoké</span></div><div class="kv"><span>💶 Silná koruna ubírá z exportu</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">Střední</span></div><p style="color:var(--dim);font-size:12.5px">Truhlářství Novák s.r.o. · Brno · 9 zaměstnanců · 30 % tržeb z Německa. Ukázková firma.</p>',
+  cash: `<div class="ct">HOTOVOST · PROVOZNÍ ÚČET</div><div class="kv"><span>Na účtu</span><span class="pill">760 000 Kč</span></div><div class="kv"><span>Bezpečná rezerva</span><span class="pill">250 000 Kč</span></div><div class="kv"><span>Ztráta hodnoty za rok při 2,9 %</span><span class="pill red">−${kc0(510000 * 0.029)}</span></div><p>Nad rezervou leží zhruba 510 000 Kč bez úroku. Firemní spořicí účet nebo termínovaný vklad v George Business. Nejde o doporučení.</p>`,
+  revenue: `<div class="ct">TRŽBY</div><div class="kv"><span>Průměrně za měsíc</span><span class="pill">1 040 000 Kč</span></div><div class="kv"><span>Export do Německa</span><span class="pill">30 % · ~12 600 €</span></div><div class="kv"><span>Meziročně</span><span class="pill red">−4 %</span></div><p>Koruna posílila o 2,1 %, za stejné německé zakázky dostanete zhruba o <b>${kc0(312000 * 0.021)}</b> měsíčně méně.</p>`,
+  receivables: '<div class="ct">POHLEDÁVKY</div><div class="kv"><span>Nezaplacené faktury</span><span class="pill">640 000 Kč</span></div><div class="kv"><span>Po splatnosti</span><span class="pill red">380 000 Kč · 34 dní</span></div><div class="kv"><span>Průměrná doba úhrady</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">41 dní (obor 29)</span></div><p>Když největší odběratel zaplatí ještě později, v únoru nevyjde na DPH. Zeptejte se George nahoře.</p>',
+  loan: `<div class="ct">ÚVĚR NA STROJE · FIXACE DO 3/2027</div><div class="kv"><span>Zbývá splatit</span><span class="pill">2,4 mil. Kč · 5 let</span></div><div class="kv"><span>Splátka dnes (6,9 %)</span><span class="pill">${kc0(PMT(2400000, 6.9, 5))}</span></div><div class="kv"><span>Při refixaci na 5,9 %</span><span class="pill">${kc0(PMT(2400000, 5.9, 5))}</span></div><p>Úspora zhruba <b>${kc0(PMT(2400000, 6.9, 5) - PMT(2400000, 5.9, 5))}</b> měsíčně. Na úvěr nejvíc působí sazby.</p>`,
+  spending: '<div class="ct">NÁKLADY FIRMY · TENTO MĚSÍC</div><div class="kv"><span>Celkem</span><span class="pill">1 010 000 Kč</span></div><div class="kv"><span>Meziročně</span><span class="pill red">+6 %</span></div><div class="kv"><span>👷 Mzdy a odvody</span><span class="pill red">42 % · +7,1 %</span></div><div class="kv"><span>🪵 Dřevo a materiál</span><span class="pill">24 % · +5,4 %</span></div><p>Náklady rostou rychleji než tržby (+6 % proti −4 %).</p>',
+  demand: '<div class="ct">POPTÁVKA · −3,2 % R/R</div><p>Lidé kupují méně nábytku a rekonstrukcí. Zakázky přicházejí pomaleji a zákazníci platí později. Zdroj: agregované platby kartou, ČSÚ.</p>',
+  inflation: '<div class="ct">INFLACE · 2,9 %</div><p>Zdražuje nájem, pojištění i služby a ubírá hodnotu hotovosti, která leží bez úroku.</p>',
+  eur: '<div class="ct">SILNÁ KORUNA · +2,1 % VŮČI €</div><p>Za každé euro z Německa dostanete méně korun. Dovážený materiál naopak zlevňuje.</p>',
+  rates: '<div class="ct">ÚROKOVÉ SAZBY · ČNB 3,5 %</div><p>Určují cenu provozních a investičních úvěrů i to, kolik vydělá volná hotovost.</p>',
+  wages: '<div class="ct">MZDY V OBORU · +7,1 %</div><p>Mzdy truhlářů v regionu rostou rychleji než inflace. Největší položka vašich nákladů.</p>',
+  energy: '<div class="ct">ENERGIE · +1,8 %</div><p>Pohánějí stroje, sušárnu i dopravu. Promítají se do nákladů každé zakázky.</p>',
+};
+let rezim = 'p';
+function nastavRezim(r) {
+  rezim = r;
+  document.querySelectorAll('.seg button').forEach((b) => b.classList.toggle('on', b.dataset.rezim === r));
+  $('#penizeNadpis').textContent = r === 'f' ? 'Moje firma' : 'Moje peníze';
+  $('#penizePodnadpis').textContent = r === 'f' ? 'Truhlářství Novák s.r.o. · co hýbe firmou' : 'Jana · co hýbe vašimi penězi';
+  $('#askDovolit').hidden = r === 'f';
+  $('#firmaOtazky').hidden = r !== 'f';
+  renderSit();
+}
+document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => nastavRezim(b.dataset.rezim)));
+
+// prognóza zůstatku firmy (jako v návrhu): faktury 10. a 25., mzdy 12., dodavatelé 15., DPH čtvrtletně
+const FB = { B0: 760000, RES: 250000, start: new Date(2026, 10, 28), end: new Date(2027, 5, 30), inflow: [[10, 520000], [25, 520000]], out: [[1, 70000], [5, 52000], [12, 430000], [15, 240000], [20, 82000]], vat: [[0, 25, 190000], [3, 25, 190000]], VAR: 2500 };
+const dkey = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+function prognozaFirmy(o = {}) {
+  const body = []; let b = FB.B0;
+  for (let d = new Date(FB.start); d <= FB.end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    const dd = d.getDate(), m = d.getMonth(), k = dkey(d);
+    FB.inflow.forEach(([x, a]) => { if (dd === x) b += a; });
+    FB.out.forEach(([x, a]) => { if (dd === x) b -= a; });
+    FB.vat.forEach(([mm, x, a]) => { if (m === mm && dd === x) b -= a; });
+    b -= FB.VAR;
+    (o.ev || []).forEach(([dt, a]) => { if (dkey(dt) === k) b += a; });
+    if (o.pay && dd === 5 && k > dkey(FB.start)) b -= o.pay;
+    body.push({ d: new Date(d), b });
+  }
+  return body;
+}
+const MES_6P = ['lednu', 'únoru', 'březnu', 'dubnu', 'květnu', 'červnu', 'červenci', 'srpnu', 'září', 'říjnu', 'listopadu', 'prosinci'];
+const nahoru5 = (v) => Math.ceil(v / 5000) * 5000;
+function kartaPotvrzeni(titul, text, ano) {
+  return `<div class="card"><div class="ct">${titul}</div><p>${text}</p><div class="btns"><button class="b-white" type="button" data-odpoved="ano">${ano}</button><button class="b-dark" type="button" data-odpoved="ne">Ne, díky</button></div></div>`;
+}
+async function potvrdFirma(id, titul, text, ano, hotovo) {
+  const odpoved = await potvrzeni(id);
+  if (id !== beh) return;
+  chat.querySelectorAll('.btns').forEach((b) => b.remove());
+  pridejJa(odpoved === 'ano' ? 'Ano.' : 'Ne, díky.');
+  if (odpoved !== 'ano') { pridejGeorge('Nic jsem nenastavil. Kdykoli se zeptejte znovu.'); return; }
+  krok('ok', 'Provedeno', hotovo);
+  pridejGeorge(`Hotovo. ${hotovo}`);
+}
+const FIRMA = {
+  faktura: {
+    nazev: 'Firma: pozdní platba', text: 'Zvládneme to, když Nábytek Plus zaplatí fakturu o dva měsíce později?',
+    async run(id) {
+      if (!(await premysli(id, 1000))) return;
+      const pozde = [[new Date(2027, 0, 10), -380000], [new Date(2027, 2, 10), 380000]];
+      const p = prognozaFirmy({ ev: pozde });
+      const mzdy = p.find((x) => dkey(x.d) === 20270112).b;
+      const mn = p.reduce((a, x) => (x.b < a.b ? x : a));
+      const zaloha = 380000 * 0.9;
+      const s = prognozaFirmy({ ev: pozde.concat([[new Date(2027, 0, 12), zaloha], [new Date(2027, 2, 10), -zaloha]]) });
+      const ok = !s.find((x) => x.b < FB.RES);
+      krok('tool', 'Výpočet banky', 'Prognóza zůstatku firmy den po dni do června: faktury 10. a 25., mzdy 12., dodavatelé 15., DPH 25. ledna.');
+      krok('rule', 'Pevný výpočet', `Faktura 380 000 Kč přijde až v březnu → nejnižší zůstatek v ${MES_6P[mn.d.getMonth()]}: ${kc(mn.b)}, rezerva ${kc(FB.RES)}.`);
+      if (ok) krok('rule', 'Pevný výpočet', `S faktoringem (90 % = ${kc(zaloha)} do 2 dnů) rezerva vydrží celé období ✓`);
+      krok('ai', 'George', 'Převypráví výsledek jednou větou. Nabídku jen připraví, nic se nepodepisuje.');
+      const t = `Mzdy 12. ledna ${mzdy >= 0 ? 'zaplatíte' : 'nezaplatíte'}, ale v ${MES_6P[mn.d.getMonth()]} byste byli asi ${kc(nahoru5(FB.RES - mn.b))} pod rezervou. ${ok ? `Když fakturu předfinancujete faktoringem, dostanete ${kc(zaloha)} do dvou dnů a rezerva vydrží. Mám připravit nabídku?` : ''}`;
+      pridejGeorge(t, `<div class="card"><div class="ct">ODHAD ZŮSTATKU FIRMY</div>${graf(p, FB.RES)}</div>` +
+        (ok ? kartaPotvrzeni('PŘIPRAVIT NABÍDKU FAKTORINGU?', 'Jen nezávazná kalkulace pro fakturu 380 000 Kč. Nic se nepodepisuje bez vás.', 'Ano, připravit') : ''));
+      if (ok) await potvrdFirma(id, '', '', '', 'Kalkulace faktoringu bude v George Business do zítřka. Nic jste nepodepsali.');
+    },
+  },
+  stroj: {
+    nazev: 'Firma: CNC stroj', text: 'Můžeme si koupit nový CNC stroj za 1,2 milionu?',
+    async run(id) {
+      if (!(await premysli(id, 1000))) return;
+      const cena = 1200000;
+      const c = prognozaFirmy({ ev: [[FB.start, -cena]] });
+      const fb = c.find((x) => x.b < FB.RES);
+      krok('tool', 'Výpočet banky', 'Nákup z hotovosti dnes, zůstatek den po dni do června včetně mezd a DPH.');
+      if (!fb) {
+        krok('ok', 'Pevný výpočet', 'Rezerva 250 000 Kč zůstane v pořádku ✓');
+        pridejGeorge(`Ano, ${kc(cena)} zaplatíte z hotovosti a rezerva ${kc(FB.RES)} zůstane v pořádku.`, `<div class="card"><div class="ct">ODHAD ZŮSTATKU FIRMY</div>${graf(c, FB.RES)}</div>`);
+        return;
+      }
+      const mn = c.reduce((a, x) => (x.b < a.b ? x : a));
+      let roky = 0, splatka = 0;
+      for (const y of [5, 7, 10]) { const pm = PMT(cena, 6.4, y); if (!prognozaFirmy({ pay: pm }).find((x) => x.b < FB.RES)) { roky = y; splatka = pm; break; } }
+      krok('stop', 'Pevný výpočet', `Z hotovosti ne: zůstatek klesne pod rezervu o ~${kc(nahoru5(FB.RES - mn.b))}.`);
+      if (roky) krok('rule', 'Pevný výpočet', `Investiční úvěr ${roky} let, ilustrativní sazba 6,4 % → splátka ~${kc(Math.round(splatka / 100) * 100)} a rezerva vydrží ✓`);
+      krok('ai', 'George', 'Nabídne schůzku s firemním bankéřem. Úvěr sám nesjednává.');
+      const kdy = dkey(fb.d) === dkey(FB.start) ? 'hned po nákupu' : `v ${MES_6P[fb.d.getMonth()]}`;
+      const t = `Z hotovosti ne: ${kdy} byste byli asi ${kc(nahoru5(FB.RES - mn.b))} pod rezervou. ${roky ? `S investičním úvěrem na ${roky} let by splátka byla asi ${kc(Math.round(splatka / 100) * 100)} měsíčně a rezerva zůstane v pořádku. Mám domluvit schůzku s bankéřem?` : 'Ani s úvěrem to teď nevychází, zkuste menší stroj nebo leasing.'}`;
+      const l = roky ? prognozaFirmy({ pay: splatka }) : c;
+      pridejGeorge(t, `<div class="card"><div class="ct">${roky ? 'ZŮSTATEK SE SPLÁTKOU ÚVĚRU' : 'ZŮSTATEK PŘI NÁKUPU Z HOTOVOSTI'}</div>${graf(l, FB.RES)}</div>` +
+        (roky ? kartaPotvrzeni('DOMLUVIT SCHŮZKU S FIREMNÍM BANKÉŘEM?', 'Ilustrativní sazba 6,4 %. Skutečná nabídka závisí na posouzení firmy.', 'Ano, domluvit') : ''));
+      if (roky) await potvrdFirma(id, '', '', '', 'Firemní bankéř se ozve do dvou pracovních dnů.');
+    },
+  },
+};
+$('#askFaktura').addEventListener('click', () => { zastavAuto(); spust(FIRMA.faktura); });
+$('#askStroj').addEventListener('click', () => { zastavAuto(); spust(FIRMA.stroj); });
+
+function renderSit(vybrano = null) {
+  const W = 342, H = 330;
+  const UZ = rezim === 'f' ? UZLY_F : UZLY, HR = rezim === 'f' ? HRANY_F : HRANY, DT = rezim === 'f' ? DETAIL_F : DETAIL;
+  const cesty = HR.map(([a, b, w, c]) => {
+    const A = UZ.find((u) => u.id === a), B = UZ.find((u) => u.id === b);
+    const aktiv = !vybrano || vybrano === a || vybrano === b;
+    return `<path d="M${A.x},${A.y} L${B.x},${B.y}" stroke="${c || 'rgba(157,182,228,.6)'}" stroke-width="${w || 1.6}" ${w ? 'stroke-dasharray="8 7"' : ''} stroke-linecap="round" opacity="${aktiv ? 0.9 : 0.12}"/>`;
+  }).join('');
+  $('#sit').innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${cesty}</svg>` + UZ.map((u) =>
+    `<button type="button" class="uzel ${u.druh || ''} ${vybrano === u.id ? 'sel' : ''}" data-uzel="${u.id}" style="left:${(u.x / W) * 100}%;top:${(u.y / H) * 100}%">
+      <span class="kr" style="${u.sev ? `border-color:${u.sev}` : ''}">${u.e}</span><b>${u.l}</b>${u.v ? `<small>${u.v}</small>` : ''}</button>`).join('');
+  $('#sitDetail').innerHTML = vybrano ? DT[vybrano] : (rezim === 'f'
+    ? '<div class="ct">CO HÝBE VAŠÍ FIRMOU</div><p>Uprostřed je firma, kolem hotovost, tržby, pohledávky, úvěr a náklady. Čtverečky jsou vlivy z ekonomiky. Klepněte na cokoli.</p>'
+    : '<div class="ct">CO HÝBE VAŠIMI PENĚZI</div><p>Uprostřed jste vy, kolem vlivy z ekonomiky. Čím tlustší a červenější čára, tím silnější vliv. Klepněte na cokoli.</p>');
+}
+$('#sit').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-uzel]'); if (!b) return;
+  const id = b.dataset.uzel; renderSit($('#sit .uzel.sel')?.dataset.uzel === id ? null : id);
+});
+$('#askDovolit').addEventListener('click', () => { zastavAuto(); spust(3); });
+
+// celá obrazovka: skryje prohlížeč i okolí stránky
+async function celaObrazovka() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (e) {
+    $('#fullNote').hidden = false;
+  }
+}
+document.addEventListener('fullscreenchange', () => {
+  $('#btnFull').textContent = document.fullscreenElement ? '⤢ Ukončit celou obrazovku' : '⛶ Celá obrazovka';
+  prizpusob();
+});
+$('#btnFull').addEventListener('click', celaObrazovka);
+
+async function spust(i) {
+  const id = ++beh;
+  cekaNaPotvrzeni = null;
+  document.querySelectorAll('.scen').forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  document.querySelectorAll('.cip').forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  // číslo = scénář ze seznamu, objekt = firemní otázka z obrazovky Moje firma
+  const s = typeof i === 'number' ? SCENARE[i] : i;
+  ukazObrazovku('george');
+  $('#scenName').textContent = typeof i === 'number' ? `${i + 1} · ${s.nazev}` : s.nazev;
+  $('#trace').innerHTML = '';
+  if (!(await klientMluvi(id, s.text))) return;
+  await s.run(id);
+  return id;
+}
+
+// ---------------------------------------------------------------------------
+// Ovládání
+// ---------------------------------------------------------------------------
+function reset() {
+  beh++; cekaNaPotvrzeni = null; zastavAuto();
+  try { speechSynthesis.cancel(); } catch (e) { /* nic */ }
+  S = { ...START, pohyby: POHYBY_START.map((p) => ({ ...p })) }; zustatek(S.zustatek);
+  renderPrehled(); zatresKlid(); nastavRezim('p');
+  ukazObrazovku('george');
+  chat.innerHTML = '';
+  pridejGeorge('Dobrý den, paní Jano, tady George. S čím vám dnes pomůžu?');
+  $('#trace').innerHTML = '<div class="empty">Vyberte scénář vlevo nebo stiskněte <b>A</b> pro automatické demo. Tady se ukáže každý krok: co AI pochopila, jaký nástroj zavolala a co zkontrolovala pevná pravidla.</div>';
+  $('#scenName').textContent = '';
+  $('#tomas').classList.remove('alert'); $('#tomas').style.borderColor = '';
+  $('#tomasText').textContent = 'Žádná upozornění. Zůstatek babičky nevidí, dostane jen signál, když něco nehraje.';
+  document.querySelectorAll('.scen, .cip').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+}
+function zastavAuto() { auto = false; $('#btnAuto').classList.remove('on'); $('#btnAuto').textContent = '▶ Auto demo'; }
+async function autoDemo() {
+  if (auto) { zastavAuto(); return; }
+  reset(); auto = true; $('#btnAuto').classList.add('on'); $('#btnAuto').textContent = '■ Zastavit';
+  // 1) elektřina → peníze reálně odešly (Přehled) · 2) Tomáš → odečet · 3) nový příjemce · 4) Kolik si můžu dovolit
+  const poradi = [
+    { i: 0, odecet: 'Odešlo 1 850 Kč za elektřinu.' },
+    { i: 1, odecet: 'Odešlo 300 Kč Tomášovi.' },
+    { i: 2 },
+    { i: 3 },
+  ];
+  for (const krokDema of poradi) {
+    if (!auto) return;
+    const id = await spust(krokDema.i);
+    if (!auto || id !== beh) return;
+    await pauza(1800);
+    if (krokDema.odecet) {
+      if (!auto) return;
+      await ukazOdecet(krokDema.odecet);
+    }
+  }
+  // 5) Zatřes: spárování dvou telefonů a převod 500 Kč, pak znovu Přehled
+  if (!auto) return;
+  ukazObrazovku('zatres');
+  await pauza(1500);
+  if (!auto) return;
+  await zatrest(true);
+  if (!auto) return;
+  await pauza(2500);
+  if (!auto) return;
+  await ukazOdecet('Zatřesením odešlo 500 Kč Tomášovi.');
+  zastavAuto();
+}
+$('#btnAuto').addEventListener('click', autoDemo);
+$('#btnReset').addEventListener('click', reset);
+$('#btnHlas').addEventListener('click', () => {
+  hlas = !hlas;
+  const b = $('#btnHlas'); b.classList.toggle('on', hlas); b.setAttribute('aria-pressed', String(hlas));
+  b.textContent = hlas ? '🔊 Hlas zap.' : '🔈 Hlas vyp.';
+  if (!hlas) { try { speechSynthesis.cancel(); } catch (e) { /* nic */ } }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('input, textarea')) return;
+  if (e.key >= '1' && e.key <= String(SCENARE.length)) { zastavAuto(); spust(+e.key - 1); }
+  else if ((e.key === ' ' || e.key === 'Enter') && cekaNaPotvrzeni) { e.preventDefault(); chat.querySelectorAll('.btns').forEach((b) => b.remove()); cekaNaPotvrzeni('ano'); }
+  else if ((e.key === 'n' || e.key === 'N') && cekaNaPotvrzeni) { chat.querySelectorAll('.btns').forEach((b) => b.remove()); cekaNaPotvrzeni('ne'); }
+  else if (e.key === 'f' || e.key === 'F') celaObrazovka();
+  else if (e.key === 'a' || e.key === 'A') autoDemo();
+  else if (e.key === 'r' || e.key === 'R') reset();
+});
+
+// telefon se přizpůsobí výšce okna (projektor i notebook)
+function prizpusob() {
+  const p = $('#phone'), w = $('#phoneWrap');
+  const vyska = window.innerHeight - 32, sirka = Math.min(window.innerWidth - 32, 430);
+  const k = Math.min(1.15, vyska / 864, sirka / 410);
+  p.style.transform = `scale(${k})`;
+  w.style.height = `${864 * k}px`; w.style.width = `${410 * k}px`;
+}
+window.addEventListener('resize', prizpusob);
+prizpusob();
+$('#clock').textContent = new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+reset();
+</script>
+
+</body>
+</html>

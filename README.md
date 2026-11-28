@@ -8,6 +8,20 @@ Prototyp pro 4FIS Hackathon (výzva České spořitelny). Banka je hlas a pravid
 
 Všechna data jsou ilustrační, jména fiktivní.
 
+## Demo v prohlížeči
+
+**▶ [Otevřít demo George](https://vladurka.github.io/BankaBezObrazovky/)** – interaktivní maketa aplikace pro projektor,
+běží bez backendu i bez instalace (zdroj: [`docs/index.html`](docs/index.html)).
+
+- telefon s aplikací George a vedle něj panel **Pod kapotou**: co pochopila AI, jaký nástroj banky zavolala
+  a co zkontrolovala pevná pravidla,
+- scénáře: platba „jako minule“, poslání peněz Tomášovi, nový příjemce (zamítnuto), „Kolik si můžu dovolit?“,
+- spodní navigace: **Přehled** (zůstatek a historie převodů), **George**, **Zatřes** (simulace spárování
+  a převodu 500 Kč), **Peníze** (síť „Moje peníze“, přepínač Osobní / Firma),
+- **auto demo** projde všechny scénáře, po každé platbě ukáže odečet na účtu a na konci Zatřes.
+
+Ovládání: `1`–`4` scénář · `Mezerník` potvrdit „ano“ · `N` „ne“ · `F` celá obrazovka · `A` auto demo · `R` reset.
+
 ## Spuštění
 
 ### Backend (počítač)
