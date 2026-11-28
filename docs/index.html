@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Rozvrh: tři sloupce pro projektor – scénáře | telefon | pod kapotou. Jeden tmavý svět jako aplikace. */
+/* Rozvrh: dva sloupce pro projektor – scénáře | telefon. Jeden tmavý svět jako aplikace. */
 :root {
   --stage: #0E0E12;
   --bg: #17171C;
@@ -42,8 +42,14 @@ body {
 button { font-family: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--blue-soft); outline-offset: 2px; }
 
-.stage { display: grid; grid-template-columns: minmax(240px, 300px) auto minmax(300px, 440px); gap: 40px; justify-content: center; align-items: center; align-content: center; min-height: calc(100dvh - 32px); }
-@media (max-width: 1100px) { .stage { grid-template-columns: 1fr; justify-items: center; } .side { width: 100%; max-width: 560px; } }
+.stage { display: grid; grid-template-columns: minmax(300px, 400px) auto; gap: 64px; justify-content: center; align-items: center; align-content: center; min-height: calc(100dvh - 32px); }
+/* boční panely větší, aby byly na projektoru čitelné vedle telefonu */
+.stage > .side { zoom: 1.5; }
+.stage.jen-telefon { grid-template-columns: auto; }
+.stage.jen-telefon > aside.side { display: none; }
+.stage > section.side { zoom: 1.35; }
+.stage > section.side .trace { max-height: 460px; }
+@media (max-width: 1100px) { .stage { grid-template-columns: 1fr; justify-items: center; } .side { width: 100%; max-width: 560px; } .stage > .side, .stage > section.side { zoom: 1; } }
 
 /* ---- levý panel: scénáře ---- */
 .side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
@@ -157,6 +163,32 @@ button:focus-visible { outline: 2px solid var(--blue-soft); outline-offset: 2px;
 .uzel.ja .kr { width: 54px; height: 54px; border-color: #fff; }
 .uzel.sel .kr { box-shadow: 0 0 14px #5AA2FF; }
 .uzel b { font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.det-hlava { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.det-l { display: flex; gap: 10px; align-items: center; }
+.det-e { font-size: 26px; }
+.det-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .7px; color: var(--muted); }
+.det-titul { font-size: 20px; font-weight: 700; }
+.badge { background: var(--avatar); color: var(--blue-soft); font-size: 10.5px; font-weight: 700; letter-spacing: .5px; border-radius: 999px; padding: 2px 8px; margin-right: 6px; }
+.velke { font-size: 30px; font-weight: 700; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.vrow { display: flex; flex-direction: column; gap: 4px; }
+.vrow b { font-variant-numeric: tabular-nums; }
+.vbar { height: 6px; border-radius: 3px; background: var(--card2); overflow: hidden; }
+.vbar i { display: block; height: 100%; border-radius: 3px; }
+.card p.zdroj, .card .vsub { font-size: 12px; color: var(--dim); }
+.tag { flex: 0 0 auto; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 9px; }
+.tag.red { background: var(--red-bg); color: var(--red); }
+.tag.amber { background: var(--amber-bg); color: var(--amber); }
+.tag.green { background: var(--green-bg); color: var(--green); }
+.nabidka { background: #1A2540; border: 1px solid rgba(90,162,255,.35); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.nabidka b { font-size: 14.5px; }
+.proc { color: var(--blue-soft); font-size: 12px; font-weight: 600; }
+.sit svg .stitek { animation: objev .3s ease-out both; }
+.uzel { animation: objev .3s ease-out both; }
+.uzel.skryty { visibility: hidden; pointer-events: none; animation: none; }
+.sit svg path { animation: objev .3s ease-out both; }
+.sit svg path.tok { animation: tok 1.2s linear infinite; }
+@keyframes tok { to { stroke-dashoffset: -15; } }
+@keyframes objev { from { opacity: 0; } to { opacity: 1; } }
 .uzel small { font-size: 9.5px; color: var(--dim); white-space: nowrap; }
 @keyframes tres { 0%, 100% { translate: 0 0; } 25% { translate: -8px 0; } 75% { translate: 8px 0; } }
 .chart { width: 100%; height: auto; display: block; }
@@ -208,7 +240,7 @@ img { max-width: 100%; }
   <aside class="side" aria-label="Scénáře">
     <div class="brand">
       <h1>George naživo</h1>
-      <p>Hlasový asistent banky. Vyberte scénář, George odpoví a vpravo uvidíte, co se děje pod kapotou.</p>
+      <p>Hlasový asistent banky. Vyberte scénář nebo klepněte na dotaz v telefonu a George odpoví.</p>
     </div>
     <div class="label">Scénáře · účet Jany</div>
     <div id="scenare" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -304,7 +336,8 @@ img { max-width: 100%; }
   </div>
 
   <!-- pod kapotou -->
-  <section class="side" aria-label="Pod kapotou">
+  <!-- panel je na prezentaci skrytý; zůstává v kódu, protože do něj zapisují scénáře -->
+  <section class="side" aria-label="Pod kapotou" hidden>
     <div class="trace-head"><h3>Pod kapotou</h3><span class="note" id="scenName"></span></div>
     <div class="legend">
       <span><i style="background:var(--blue-soft)"></i>AI (řeč a jazyk)</span>
@@ -612,6 +645,13 @@ function ukazObrazovku(nazev) {
   document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.dataset.scr !== nazev; });
   document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === nazev));
   if (nazev === 'george') dolu();
+  aktivniZalozka = nazev;
+  rozvrh();
+}
+// levý panel se scénáři jen u Georga; během auto dema zůstává, aby obraz neposkakoval
+let aktivniZalozka = 'george';
+function rozvrh() {
+  $('.stage').classList.toggle('jen-telefon', aktivniZalozka !== 'george' && !auto);
 }
 document.querySelectorAll('.nav button').forEach((b) => b.addEventListener('click', () => ukazObrazovku(b.dataset.tab)));
 
@@ -687,11 +727,13 @@ const UZLY = [
   { id: 'potr', e: '🍞', l: 'Potraviny', v: '+4,1 %', x: 44, y: 262, druh: 'f' },
   { id: 'energie', e: '⚡', l: 'Energie', v: '+1,8 %', x: 300, y: 296, druh: 'f' },
 ];
-const HRANY = [
-  ['ja', 'uspory', 0], ['ja', 'hypo', 0], ['ja', 'uver', 0], ['ja', 'vydaje', 0],
-  ['infl', 'uspory', 3, '#E8A812'], ['sazby', 'uspory', 2, '#C4B12A'], ['sazby', 'hypo', 7, '#C8284A'], ['sazby', 'uver', 5, '#D8573C'],
-  ['infl', 'vydaje', 2.5, '#A3B32E'], ['potr', 'vydaje', 3, '#C8A11A'], ['energie', 'vydaje', 1.6, '#5FA040'], ['infl', 'uver', 1.6, '#6FA83A'],
-];
+// váhy a intenzity vlivů jako v návrhu B (mobile/src/mojePenize/data.ts)
+const FI_P = { infl: 2.9 / 8, sazby: 3.5 / 5, potr: 4.1 / 8, energie: 1.8 / 8 };
+const FW_P = {
+  uspory: { infl: 0.7, sazby: 0.3 }, hypo: { sazby: 0.85, infl: 0.15 },
+  uver: { sazby: 0.7, infl: 0.3 }, vydaje: { infl: 0.35, potr: 0.35, energie: 0.3 },
+};
+let HRANY = []; // naplní se níže, až bude k dispozici funkce sev()
 const DETAIL = {
   ja: '<div class="ct">MOJE FINANČNÍ KONDICE</div><div class="kv"><span>Skóre</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">64 · Průměrná</span></div><div class="kv"><span>💰 Volné peníze ztrácejí hodnotu</span><span class="pill red">Vysoké</span></div><div class="kv"><span>🏠 Fixace končí 9/2027</span><span class="pill" style="background:var(--amber-bg);color:var(--amber)">Střední</span></div>',
   uspory: '<div class="ct">ÚSPORY · BĚŽNÝ ÚČET 0 %</div><div class="kv"><span>Kupní síla za 12 měsíců</span><span class="pill red">97 182 Kč</span></div><p>Na spořicím účtu se 3 % by si úspory udržely hodnotu. Nejde o doporučení.</p>',
@@ -850,26 +892,129 @@ const FIRMA = {
     },
   },
 };
+// ---- Podrobný detail po klepnutí (jako v návrhu B) ------------------------
+HRANY = [
+  ['ja', 'uspory', 0], ['ja', 'hypo', 0], ['ja', 'uver', 0], ['ja', 'vydaje', 0],
+  ...Object.keys(FW_P).flatMap((t) => Object.keys(FW_P[t]).filter((f) => FW_P[t][f] >= 0.2).map((f) => {
+    const v = FW_P[t][f] * FI_P[f] * 100; return [f, t, 1.2 + Math.min(1, v / 60) * 6, sev(v * 1.7)];
+  })),
+];
+const MODEL = {
+  p: {
+    fi: FI_P, w: FW_P,
+    faktory: {
+      infl: { hodnota: '2,9 %', zdroje: 'ČSÚ, ČNB', popis: 'Ceny celkově rostou. Pomalu ubírají hodnotu peněz, které leží bez úroku, a zdražují každodenní nákupy.' },
+      sazby: { hodnota: 'ČNB 3,5 %', zdroje: 'ČNB', popis: 'Vyšší sazby zdražují úvěry a hypotéky a zároveň zvyšují výnos spoření. Časem také tlumí inflaci.' },
+      potr: { hodnota: '+4,1 %', zdroje: 'ČSÚ, Eurostat', popis: 'Potraviny a stravování zdražují rychleji než průměr, takže ze stejného rozpočtu pokryjete méně.' },
+      energie: { hodnota: '+1,8 %', zdroje: 'ČSÚ, ERÚ', popis: 'Ceny energií se mění pomalu, ale promítají se do účtů za bydlení i do cen dopravy.' },
+    },
+    polozky: {
+      uspory: { eyebrow: 'MOJE PENÍZE', nabidka: ['100 000 Kč leží na účtu bez úroku už 6 měsíců', 'Nechte peníze pracovat: spoření i investice', 'Spořicí účet přináší úrok a peníze zůstávají dostupné. Investování se hodí na delší horizont, začnete krátkým průvodcem.', 'Otevřít spořicí účet'] },
+      hypo: { eyebrow: 'MOJE ZÁVAZKY', nabidka: ['fixace končí za méně než 2 roky a sazby jsou nad vašimi 4,9 %', 'Naplánujte refixaci včas', 'Hypoteční poradce porovná možnosti a vysvětlí, co se stane s vaší splátkou. Nezávazně.', 'Objednat poradce'] },
+      uver: { eyebrow: 'MOJE ZÁVAZKY', nabidka: ['úvěr je dražší než to, co vydělávají vaše úspory', 'Zvažte mimořádnou splátku', 'Poradíme, zda se vyplatí část úvěru splatit z úspor, nebo ho refinancovat. Včetně poplatků.', 'Spočítat možnosti'] },
+      vydaje: { eyebrow: 'MOJE VÝDAJE', nabidka: ['restaurace tvoří 30 % vašich výdajů, výrazně nad běžným podílem', 'Zdarma: kurz Rozpočet bez nudy', 'Dvacetiminutový kurz finančního vzdělávání. Žádné produkty, stačí přihlášení do George.', 'Spustit kurz'] },
+    },
+  },
+  f: {
+    fi: FI, w: FW,
+    faktory: {
+      demand: { hodnota: '−3,2 % r/r', zdroje: 'data banky (agregované platby kartou), ČSÚ', popis: 'Lidé kupují méně nábytku a rekonstrukcí. Zakázky přicházejí pomaleji a zákazníci častěji platí později.' },
+      inflation: { hodnota: '2,9 %', zdroje: 'ČSÚ, ČNB', popis: 'Obecný růst cen zdražuje nájem, pojištění i služby a ubírá hodnotu hotovosti, která leží bez úroku.' },
+      eur: { hodnota: '+2,1 % vůči €', zdroje: 'ČNB', popis: 'Když koruna posiluje, za každé euro z Německa dostanete méně korun. Dovážený materiál naopak zlevňuje.' },
+      rates: { hodnota: 'ČNB 3,5 %', zdroje: 'ČNB', popis: 'Sazby určují cenu provozních a investičních úvěrů a zároveň to, kolik vydělá volná hotovost.' },
+      wages: { hodnota: '+7,1 %', zdroje: 'ČSÚ, data banky (agregované mzdové platby v oboru)', popis: 'Mzdy truhlářů a montážníků v regionu rostou rychleji než inflace. Je to největší položka vašich nákladů.' },
+      energy: { hodnota: '+1,8 %', zdroje: 'ČSÚ, ERÚ', popis: 'Energie pohánějí stroje, sušárnu i dopravu. Promítají se do nákladů na každou zakázku.' },
+    },
+    polozky: {
+      cash: { eyebrow: 'MOJE FIRMA', nabidka: ['nad rezervou máte 510 000 Kč bez úroku už 4 měsíce', 'Firemní spořicí účet nebo termínovaný vklad', 'Spořicí účet nechá peníze dostupné, termínovaný vklad dá vyšší úrok za pevnou dobu.', 'Otevřít spořicí účet'] },
+      revenue: { eyebrow: 'MOJE FIRMA', nabidka: ['30 % tržeb máte v eurech a koruna posiluje', 'Zajistěte si kurz na příští zakázky', 'Měnový forward zafixuje kurz pro budoucí platby z Německa. Specialista vysvětlí, kdy se vyplatí.', 'Spojit se specialistou'] },
+      receivables: { eyebrow: 'MOJE FIRMA', nabidka: ['380 000 Kč je po splatnosti a odběratelé platí pomaleji než obor', 'Peníze z faktur hned: faktoring', 'Faktoring vyplatí až 90 % faktury do dvou dnů a o inkaso se postará za vás.', 'Spočítat faktoring'] },
+      loan: { eyebrow: 'MOJE ZÁVAZKY', nabidka: ['fixace končí za 4 měsíce a sazby od podpisu klesly', 'Refixujte úvěr včas', 'Firemní bankéř porovná možnosti, včetně případné záruky Národní rozvojové banky.', 'Objednat bankéře'] },
+      spending: { eyebrow: 'NÁKLADY FIRMY', nabidka: ['mzdy rostou o 7,1 % ročně, tržby o −4 %', 'Bezplatný kurz: ceny zakázek a marže', 'Krátký kurz pro malé firmy, jak promítnout růst mezd do cen. Žádný produkt.', 'Spustit kurz'] },
+    },
+  },
+};
+const uroven = (v) => (v >= 35 ? 'silný' : v >= 18 ? 'střední' : 'slabý');
+const vlivM = (m, t, f) => ((m.w[t] && m.w[t][f]) || 0) * m.fi[f] * 100;
+
+// procento vlivu na čáře (podíl faktoru na celkovém dopadu položky), jen když je něco vybrané
+function stitekHrany(vybrano, a, b, A, B, w) {
+  if (!vybrano || !w) return '';
+  const m = MODEL[rezim];
+  const cel = Object.keys(m.w[b] || {}).reduce((s, f) => s + vlivM(m, b, f), 0) || 1;
+  const pct = Math.round((vlivM(m, b, a) / cel) * 100);
+  const x = A.x + (B.x - A.x) * 0.45, y = A.y + (B.y - A.y) * 0.45;
+  return `<g class="stitek"><rect x="${x - 17}" y="${y - 9}" width="34" height="18" rx="9" fill="#26262D" stroke="rgba(255,255,255,.25)"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${pct} %</text></g>`;
+}
+
+function detailUzlu(id) {
+  const m = MODEL[rezim];
+  const UZ = rezim === 'f' ? UZLY_F : UZLY, DT = rezim === 'f' ? DETAIL_F : DETAIL;
+  const u = UZ.find((x) => x.id === id);
+  if (!u || u.druh === 'ja') return DT[id];
+  const hlava = (eyebrow, stitek = '') => `<div class="det-hlava"><div class="det-l"><span class="det-e">${u.e}</span><div><div class="det-eyebrow">${eyebrow}</div><div class="det-titul">${u.l}</div></div></div>${stitek}</div>`;
+  if (u.druh === 'f') {
+    const f = m.faktory[id];
+    const cile = Object.keys(m.w).filter((t) => m.w[t][id]).map((t) => ({ t, v: vlivM(m, t, id) })).sort((a, b) => b.v - a.v);
+    const max = Math.max(...cile.map((x) => x.v), 1);
+    return hlava('CO SE DĚJE')
+      + `<p><span class="badge">PULSE</span>${f.popis}</p>`
+      + '<div class="ct">AKTUÁLNĚ</div>' + `<div class="velke">${f.hodnota}</div>`
+      + '<div class="ct">NA CO NEJVÍC PŮSOBÍ</div>'
+      + cile.map(({ t, v }) => {
+        const c = UZ.find((x) => x.id === t);
+        return `<div class="vrow"><div class="kv"><span>${c.e} ${c.l}</span><b>${uroven(v)}</b></div><div class="vbar"><i style="width:${(v / max) * 100}%;background:${sev(v * 1.7)}"></i></div></div>`;
+      }).join('')
+      + `<p class="zdroj">Zdroje: ${f.zdroje}. Ukázková data.</p>`;
+  }
+  const p = m.polozky[id];
+  const faktory = Object.keys(m.w[id] || {}).map((f) => ({ f, v: vlivM(m, id, f) })).sort((a, b) => b.v - a.v);
+  const cel = faktory.reduce((s, x) => s + x.v, 0) || 1;
+  const stav = u.sev === '#E0344F' ? '<span class="tag red">Vyžaduje pozornost</span>'
+    : (u.sev === '#EE7A3C' || u.sev === '#E8B010') ? '<span class="tag amber">Sledujte</span>' : '<span class="tag green">V pořádku</span>';
+  const fakta = (DT[id] || '').replace(/^<div class="ct">.*?<\/div>/, '');
+  return hlava(p.eyebrow, stav) + fakta
+    + '<div class="ct">CO TO OVLIVŇUJE</div>'
+    + faktory.map(({ f, v }) => {
+      const c = UZ.find((x) => x.id === f); const podil = (v / cel) * 100;
+      return `<div class="vrow"><div class="kv"><span>${c.e} ${c.l}</span><b>${Math.round(podil)} %</b></div><div class="vbar"><i style="width:${podil}%;background:${sev(v * 1.7)}"></i></div><div class="vsub">${uroven(v)} vliv · nyní ${m.faktory[f].hodnota}</div></div>`;
+    }).join('')
+    + (p.nabidka ? `<div class="nabidka"><div class="proc">✦ Proč to vidíte: ${p.nabidka[0]}</div><b>${p.nabidka[1]}</b><p>${p.nabidka[2]}</p><div class="btns"><button class="b-white" type="button" data-nabidka>${p.nabidka[3]}</button><button class="b-dark" type="button" data-nabidka-ne>Teď ne</button></div></div>` : '')
+    + '<p class="zdroj">Ilustrativní údaje. Nejde o doporučení.</p>';
+}
+$('#sitDetail').addEventListener('click', (e) => {
+  const box = e.target.closest('.nabidka'); if (!box) return;
+  if (e.target.closest('[data-nabidka]')) box.innerHTML = '<p>✓ Prototyp: v aplikaci by se teď otevřel další krok. Nic se neprovedlo bez vás.</p>';
+  else if (e.target.closest('[data-nabidka-ne]')) box.innerHTML = '<p class="zdroj">Nabídka skryta.</p>';
+});
 $('#askFaktura').addEventListener('click', () => { zastavAuto(); spust(FIRMA.faktura); });
 $('#askStroj').addEventListener('click', () => { zastavAuto(); spust(FIRMA.stroj); });
 
 function renderSit(vybrano = null) {
   const W = 342, H = 330;
   const UZ = rezim === 'f' ? UZLY_F : UZLY, HR = rezim === 'f' ? HRANY_F : HRANY, DT = rezim === 'f' ? DETAIL_F : DETAIL;
+  // co souvisí s vybraným uzlem: on sám a uzly s ním přímo propojené; ostatní zmizí
+  const souvisi = new Set(vybrano ? [vybrano] : UZ.map((u) => u.id));
+  if (vybrano) HR.forEach(([a, b]) => { if (a === vybrano) souvisi.add(b); if (b === vybrano) souvisi.add(a); });
   const cesty = HR.map(([a, b, w, c]) => {
+    if (vybrano && a !== vybrano && b !== vybrano) return '';
     const A = UZ.find((u) => u.id === a), B = UZ.find((u) => u.id === b);
-    const aktiv = !vybrano || vybrano === a || vybrano === b;
-    return `<path d="M${A.x},${A.y} L${B.x},${B.y}" stroke="${c || 'rgba(157,182,228,.6)'}" stroke-width="${w || 1.6}" ${w ? 'stroke-dasharray="8 7"' : ''} stroke-linecap="round" opacity="${aktiv ? 0.9 : 0.12}"/>`;
+    // vliv (w > 0) teče od faktoru k položce: přerušovaná čára se pohybuje ve směru A → B, silnější vliv rychleji
+    const tok = w ? `class="tok" stroke-dasharray="8 7" style="animation-duration:${Math.max(0.5, 1.9 - w * 0.17).toFixed(2)}s"` : '';
+    return `<path d="M${A.x},${A.y} L${B.x},${B.y}" stroke="${c || 'rgba(157,182,228,.6)'}" stroke-width="${w || 1.6}" ${tok} stroke-linecap="round" opacity="0.9"/>`
+      + stitekHrany(vybrano, a, b, A, B, w);
   }).join('');
   $('#sit').innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${cesty}</svg>` + UZ.map((u) =>
-    `<button type="button" class="uzel ${u.druh || ''} ${vybrano === u.id ? 'sel' : ''}" data-uzel="${u.id}" style="left:${(u.x / W) * 100}%;top:${(u.y / H) * 100}%">
+    `<button type="button" class="uzel ${u.druh || ''} ${vybrano === u.id ? 'sel' : ''} ${souvisi.has(u.id) ? '' : 'skryty'}" data-uzel="${u.id}" style="left:${(u.x / W) * 100}%;top:${(u.y / H) * 100}%" ${souvisi.has(u.id) ? '' : 'tabindex="-1" aria-hidden="true"'}>
       <span class="kr" style="${u.sev ? `border-color:${u.sev}` : ''}">${u.e}</span><b>${u.l}</b>${u.v ? `<small>${u.v}</small>` : ''}</button>`).join('');
-  $('#sitDetail').innerHTML = vybrano ? DT[vybrano] : (rezim === 'f'
+  $('#sitDetail').innerHTML = vybrano ? detailUzlu(vybrano) : (rezim === 'f'
     ? '<div class="ct">CO HÝBE VAŠÍ FIRMOU</div><p>Uprostřed je firma, kolem hotovost, tržby, pohledávky, úvěr a náklady. Čtverečky jsou vlivy z ekonomiky. Klepněte na cokoli.</p>'
     : '<div class="ct">CO HÝBE VAŠIMI PENĚZI</div><p>Uprostřed jste vy, kolem vlivy z ekonomiky. Čím tlustší a červenější čára, tím silnější vliv. Klepněte na cokoli.</p>');
 }
 $('#sit').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-uzel]'); if (!b) return;
+  const b = e.target.closest('[data-uzel]');
+  // klepnutí na prázdné místo vrátí celou síť
+  if (!b) { if ($('#sit .uzel.sel')) renderSit(null); return; }
   const id = b.dataset.uzel; renderSit($('#sit .uzel.sel')?.dataset.uzel === id ? null : id);
 });
 $('#askDovolit').addEventListener('click', () => { zastavAuto(); spust(3); });
@@ -921,14 +1066,14 @@ function reset() {
   $('#tomasText').textContent = 'Žádná upozornění. Zůstatek babičky nevidí, dostane jen signál, když něco nehraje.';
   document.querySelectorAll('.scen, .cip').forEach((b) => b.setAttribute('aria-pressed', 'false'));
 }
-function zastavAuto() { auto = false; $('#btnAuto').classList.remove('on'); $('#btnAuto').textContent = '▶ Auto demo'; }
+function zastavAuto() { auto = false; $('#btnAuto').classList.remove('on'); $('#btnAuto').textContent = '▶ Auto demo'; rozvrh(); }
 async function autoDemo() {
   if (auto) { zastavAuto(); return; }
-  reset(); auto = true; $('#btnAuto').classList.add('on'); $('#btnAuto').textContent = '■ Zastavit';
-  // 1) elektřina → peníze reálně odešly (Přehled) · 2) Tomáš → odečet · 3) nový příjemce · 4) Kolik si můžu dovolit
+  reset(); auto = true; $('#btnAuto').classList.add('on'); $('#btnAuto').textContent = '■ Zastavit'; rozvrh();
+  // 1) elektřina → jednou ukázat, že peníze reálně odešly (Přehled) · 2) Tomáš · 3) nový příjemce · 4) Kolik si můžu dovolit
   const poradi = [
     { i: 0, odecet: 'Odešlo 1 850 Kč za elektřinu.' },
-    { i: 1, odecet: 'Odešlo 300 Kč Tomášovi.' },
+    { i: 1 },
     { i: 2 },
     { i: 3 },
   ];
@@ -942,16 +1087,14 @@ async function autoDemo() {
       await ukazOdecet(krokDema.odecet);
     }
   }
-  // 5) Zatřes: spárování dvou telefonů a převod 500 Kč, pak znovu Přehled
+  // 5) Zatřes: spárování dvou telefonů a převod 500 Kč (odečet na účtu se ukazuje jen jednou, po první platbě)
   if (!auto) return;
   ukazObrazovku('zatres');
   await pauza(1500);
   if (!auto) return;
   await zatrest(true);
   if (!auto) return;
-  await pauza(2500);
-  if (!auto) return;
-  await ukazOdecet('Zatřesením odešlo 500 Kč Tomášovi.');
+  await pauza(3000);
   zastavAuto();
 }
 $('#btnAuto').addEventListener('click', autoDemo);
@@ -973,12 +1116,18 @@ document.addEventListener('keydown', (e) => {
 });
 
 // telefon se přizpůsobí výšce okna (projektor i notebook)
+// Celá scéna se zvětšuje/zmenšuje rovnoměrně podle okna (projektor, celá obrazovka).
+// Na úzké obrazovce (telefon) se sloupce skládají pod sebe.
 function prizpusob() {
-  const p = $('#phone'), w = $('#phoneWrap');
-  const vyska = window.innerHeight - 32, sirka = Math.min(window.innerWidth - 32, 430);
-  const k = Math.min(1.15, vyska / 864, sirka / 410);
+  const p = $('#phone'), w = $('#phoneWrap'), stage = $('.stage');
+  const uzka = window.innerWidth < 1100;
+  const k = uzka ? Math.min(1, (window.innerWidth - 32) / 410) : 1.3;
   p.style.transform = `scale(${k})`;
   w.style.height = `${864 * k}px`; w.style.width = `${410 * k}px`;
+  // obsah scény (scénáře + telefon) má asi 1260 × 1140 px; zvětšit/zmenšit tak, aby vyplnil okno
+  const z = uzka ? 1 : Math.max(0.45, Math.min(1.8, window.innerWidth / 1260, window.innerHeight / 1140));
+  stage.style.zoom = z;
+  stage.style.minHeight = `${(window.innerHeight - 32) / z}px`;
 }
 window.addEventListener('resize', prizpusob);
 prizpusob();
